@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.vibra.wanderai.R
 
 @Composable
 fun WelcomeScreen(
@@ -30,7 +32,7 @@ fun WelcomeScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "WanderAI",
+            stringResource(R.string.welcome_title),
             fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -39,21 +41,21 @@ fun WelcomeScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Tu próxima aventura comienza aquí.",
+            text = stringResource(R.string.welcome_subtitle),
             style = MaterialTheme.typography.titleMedium
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Descubre lugares, explora nuevas rutas y viaja a tu manera.",
+            text = stringResource(R.string.welcome_description),
             style = MaterialTheme.typography.bodyMedium
         )
 
         Spacer(modifier = Modifier.height(28.dp))
 
         Button(onClick = onGetStarted) {
-            Text(text = "Comenzar")
+            Text(text = stringResource(R.string.get_started))
         }
     }
 }

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">WanderAI</string>
+    <string name="welcome_title">WanderAI</string>
+    <string name="welcome_subtitle">Tu próxima aventura comienza aquí.</string>
+    <string name="welcome_description">Descubre lugares, explora nuevas rutas y viaja a tu manera.</string>
+    <string name="get_started">Comenzar</string>
 </resources>

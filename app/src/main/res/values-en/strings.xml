@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WanderAI</string>
+    <string name="welcome_title">WanderAI</string>
+    <string name="welcome_subtitle">Your next adventure starts here.</string>
+    <string name="welcome_description">Discover places, explore new routes, and travel your way.</string>
+    <string name="get_started">Get started</string>
+</resources>
