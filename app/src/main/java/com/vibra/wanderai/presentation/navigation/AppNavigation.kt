@@ -1,28 +1,29 @@
+
 package com.vibra.wanderai.presentation.navigation
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.vibra.wanderai.data.preferences.ThemePreferences
 import com.vibra.wanderai.presentation.screens.home.HomeScreen
-import com.vibra.wanderai.presentation.screens.welcome.WelcomeScreen
 import com.vibra.wanderai.presentation.screens.settings.SettingsScreen
+import com.vibra.wanderai.presentation.screens.welcome.WelcomeScreen
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 private object Routes {
-    const val SETTINGS = "settings"
     const val WELCOME = "welcome"
     const val HOME = "home"
+    const val SETTINGS = "settings"
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    themePreferences: ThemePreferences,
+    coroutineScope: CoroutineScope,
+    themeMode: String
+) {
     val navController = rememberNavController()
 
     NavHost(
@@ -44,8 +45,15 @@ fun AppNavigation() {
                 }
             )
         }
+
         composable(Routes.SETTINGS) {
             SettingsScreen(
+                themeMode = themeMode,
+                onThemeChange = { mode ->
+                    coroutineScope.launch {
+                        themePreferences.setThemeMode(mode)
+                    }
+                },
                 onBackClick = {
                     navController.popBackStack()
                 }

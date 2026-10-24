@@ -38,6 +38,7 @@ android {
 
 dependencies {
     implementation("androidx.navigation:navigation-compose:2.9.5")
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
