@@ -13,8 +13,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.vibra.wanderai.presentation.screens.home.HomeScreen
 import com.vibra.wanderai.presentation.screens.welcome.WelcomeScreen
+import com.vibra.wanderai.presentation.screens.settings.SettingsScreen
 
 private object Routes {
+    const val SETTINGS = "settings"
     const val WELCOME = "welcome"
     const val HOME = "home"
 }
@@ -38,7 +40,14 @@ fun AppNavigation() {
         composable(Routes.HOME) {
             HomeScreen(
                 onSettingsClick = {
-                    // Settings screen will be added later.
+                    navController.navigate(Routes.SETTINGS)
+                }
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsScreen(
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }
