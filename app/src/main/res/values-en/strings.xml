@@ -5,4 +5,9 @@
     <string name="welcome_subtitle">Your next adventure starts here.</string>
     <string name="welcome_description">Discover places, explore new routes, and travel your way.</string>
     <string name="get_started">Get started</string>
+    <string name="home_title">Explora el mundo</string>
+    <string name="home_subtitle">¿A dónde te gustaría ir?</string>
+    <string name="destination_hint">Escribe un destino</string>
+    <string name="explore_button">Explorar</string>
+    <string name="settings_button">Ajustes</string>
 </resources>

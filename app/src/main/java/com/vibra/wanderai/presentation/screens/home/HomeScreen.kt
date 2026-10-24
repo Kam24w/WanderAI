@@ -19,6 +19,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.vibra.wanderai.R
 
 @Composable
 fun HomeScreen(
@@ -33,12 +35,12 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Explore the world",
+            text = stringResource(R.string.home_title),
             style = MaterialTheme.typography.headlineMedium
         )
 
         Text(
-            text = "Where would you like to go?",
+            text = stringResource(R.string.home_subtitle),
             style = MaterialTheme.typography.bodyLarge
         )
 
@@ -46,7 +48,7 @@ fun HomeScreen(
             value = destination,
             onValueChange = { destination = it },
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Enter a destination") },
+            label = { Text(stringResource(R.string.destination_hint)) },
             singleLine = true
         )
 
@@ -57,7 +59,7 @@ fun HomeScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = destination.isNotBlank()
         ) {
-            Text("Explore")
+            Text(stringResource(R.string.explore_button))
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -66,7 +68,7 @@ fun HomeScreen(
             onClick = onSettingsClick,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Settings")
+            Text(stringResource(R.string.settings_button))
         }
     }
 }
