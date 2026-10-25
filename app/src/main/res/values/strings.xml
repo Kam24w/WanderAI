@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">WanderAI</string>
     <string name="welcome_title">WanderAI</string>
@@ -9,4 +10,15 @@
     <string name="destination_hint">Escribe un destino</string>
     <string name="explore_button">Explorar</string>
     <string name="settings_button">Ajustes</string>
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_description">Personaliza tu experiencia en WanderAI.</string>
+    <string name="appearance_title">Apariencia</string>
+    <string name="system_default">Predeterminado del sistema</string>
+    <string name="light_theme">Claro</string>
+    <string name="dark_theme">Oscuro</string>
+    <string name="language_title">Idioma</string>
+    <string name="system_language">Idioma del sistema</string>
+    <string name="spanish_language">Español</string>
+    <string name="english_language">Inglés</string>
+    <string name="back_button">Volver</string>
 </resources>

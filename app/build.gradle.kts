@@ -37,6 +37,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.navigation:navigation-compose:2.9.5")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
     implementation(platform(libs.androidx.compose.bom))

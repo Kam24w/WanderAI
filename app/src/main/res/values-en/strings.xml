@@ -5,9 +5,20 @@
     <string name="welcome_subtitle">Your next adventure starts here.</string>
     <string name="welcome_description">Discover places, explore new routes, and travel your way.</string>
     <string name="get_started">Get started</string>
-    <string name="home_title">Explora el mundo</string>
-    <string name="home_subtitle">¿A dónde te gustaría ir?</string>
-    <string name="destination_hint">Escribe un destino</string>
-    <string name="explore_button">Explorar</string>
-    <string name="settings_button">Ajustes</string>
+    <string name="home_title">Explore the world</string>
+    <string name="home_subtitle">Where would you like to go?</string>
+    <string name="destination_hint">Enter a destination</string>
+    <string name="explore_button">Explore</string>
+    <string name="settings_button">Settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_description">Customize your WanderAI experience.</string>
+    <string name="appearance_title">Appearance</string>
+    <string name="system_default">System default</string>
+    <string name="light_theme">Light</string>
+    <string name="dark_theme">Dark</string>
+    <string name="language_title">Language</string>
+    <string name="system_language">System language</string>
+    <string name="spanish_language">Spanish</string>
+    <string name="english_language">English</string>
+    <string name="back_button">Back</string>
 </resources>

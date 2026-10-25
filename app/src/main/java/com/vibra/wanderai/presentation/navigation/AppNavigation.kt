@@ -1,6 +1,7 @@
 
 package com.vibra.wanderai.presentation.navigation
 
+
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,6 +12,7 @@ import com.vibra.wanderai.presentation.screens.settings.SettingsScreen
 import com.vibra.wanderai.presentation.screens.welcome.WelcomeScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import com.vibra.wanderai.data.preferences.LanguagePreferences
 
 private object Routes {
     const val WELCOME = "welcome"
@@ -21,8 +23,10 @@ private object Routes {
 @Composable
 fun AppNavigation(
     themePreferences: ThemePreferences,
+    languagePreferences: LanguagePreferences,
     coroutineScope: CoroutineScope,
-    themeMode: String
+    themeMode: String,
+    languageCode: String
 ) {
     val navController = rememberNavController()
 
@@ -49,9 +53,15 @@ fun AppNavigation(
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 themeMode = themeMode,
+                languageCode = languageCode,
                 onThemeChange = { mode ->
                     coroutineScope.launch {
                         themePreferences.setThemeMode(mode)
+                    }
+                },
+                onLanguageChange = { code ->
+                    coroutineScope.launch {
+                        languagePreferences.setLanguageCode(code)
                     }
                 },
                 onBackClick = {
