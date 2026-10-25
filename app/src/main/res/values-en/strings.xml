@@ -21,4 +21,8 @@
     <string name="spanish_language">Spanish</string>
     <string name="english_language">English</string>
     <string name="back_button">Back</string>
+    <string name="login_button">Log in</string>
+    <string name="register_button">Create account</string>
+    <string name="login_title">Welcome back</string>
+    <string name="register_title">Create your account</string>
 </resources>

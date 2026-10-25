@@ -13,8 +13,11 @@ import com.vibra.wanderai.presentation.screens.welcome.WelcomeScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.vibra.wanderai.data.preferences.LanguagePreferences
+import com.vibra.wanderai.presentation.screens.login.LoginScreen
 
 private object Routes {
+    const val LOGIN = "login"
+    const val REGISTER = "register"
     const val WELCOME = "welcome"
     const val HOME = "home"
     const val SETTINGS = "settings"
@@ -38,6 +41,19 @@ fun AppNavigation(
             WelcomeScreen(
                 onGetStarted = {
                     navController.navigate(Routes.HOME)
+                },
+                onLoginClick = {
+                    navController.navigate(Routes.LOGIN)
+                },
+                onRegisterClick = {
+                    navController.navigate(Routes.REGISTER)
+                }
+            )
+        }
+        composable(Routes.LOGIN) {
+            LoginScreen(
+                onBackClick = {
+                    navController.popBackStack()
                 }
             )
         }
