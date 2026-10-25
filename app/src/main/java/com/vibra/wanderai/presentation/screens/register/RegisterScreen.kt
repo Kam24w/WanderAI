@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -27,10 +29,12 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
@@ -43,7 +47,10 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = name,
-            onValueChange = { name = it },
+            onValueChange = {
+                name = it
+                errorMessage = null
+            },
             label = { Text("Nombre / Name") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
@@ -53,7 +60,10 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = {
+                email = it
+                errorMessage = null
+            },
             label = { Text("Correo / Email") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
@@ -63,7 +73,10 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                errorMessage = null
+            },
             label = { Text("Contraseña / Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
@@ -74,17 +87,52 @@ fun RegisterScreen(
 
         OutlinedTextField(
             value = confirmPassword,
-            onValueChange = { confirmPassword = it },
+            onValueChange = {
+                confirmPassword = it
+                errorMessage = null
+            },
             label = { Text("Confirmar contraseña / Confirm password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        errorMessage?.let { message ->
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         Button(
-            onClick = { /* Implementaremos el registro después */ },
+            onClick = {
+                errorMessage = when {
+                    name.isBlank() ||
+                            email.isBlank() ||
+                            password.isBlank() ||
+                            confirmPassword.isBlank() ->
+                        "Completa todos los campos / Complete all fields"
+
+                    !android.util.Patterns.EMAIL_ADDRESS
+                        .matcher(email.trim())
+                        .matches() ->
+                        "Ingresa un correo válido / Enter a valid email"
+
+                    password.length < 8 ->
+                        "La contraseña debe tener al menos 8 caracteres / Password must be at least 8 characters"
+
+                    password != confirmPassword ->
+                        "Las contraseñas no coinciden / Passwords do not match"
+
+                    else -> null
+                }
+
+                // La creación real de la cuenta se conectará después.
+            },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(text = stringResource(R.string.register_button))
