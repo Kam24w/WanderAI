@@ -55,6 +55,14 @@ fun AppNavigation(
             LoginScreen(
                 onBackClick = {
                     navController.popBackStack()
+                },
+                onLoginSuccess = {
+                    navController.navigate(Routes.HOME) {
+                        popUpTo(Routes.WELCOME) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
                 }
             )
         }

@@ -1,3 +1,4 @@
+
 package com.vibra.wanderai.presentation.screens.register
 
 import androidx.compose.foundation.layout.Arrangement
@@ -10,16 +11,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.vibra.wanderai.R
+import com.vibra.wanderai.SupabaseConfig
+import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.launch
+import io.github.jan.supabase.auth.auth
 
 @Composable
 fun RegisterScreen(
@@ -30,6 +34,10 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -39,7 +47,7 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.register_title),
+            text = "Crear cuenta / Create account",
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -50,10 +58,12 @@ fun RegisterScreen(
             onValueChange = {
                 name = it
                 errorMessage = null
+                successMessage = null
             },
             label = { Text("Nombre / Name") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -63,10 +73,12 @@ fun RegisterScreen(
             onValueChange = {
                 email = it
                 errorMessage = null
+                successMessage = null
             },
             label = { Text("Correo / Email") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -76,11 +88,13 @@ fun RegisterScreen(
             onValueChange = {
                 password = it
                 errorMessage = null
+                successMessage = null
             },
             label = { Text("Contraseña / Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -90,11 +104,13 @@ fun RegisterScreen(
             onValueChange = {
                 confirmPassword = it
                 errorMessage = null
+                successMessage = null
             },
             label = { Text("Confirmar contraseña / Confirm password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -103,6 +119,15 @@ fun RegisterScreen(
             Text(
                 text = message,
                 color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        successMessage?.let { message ->
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -131,15 +156,44 @@ fun RegisterScreen(
                     else -> null
                 }
 
-                // La creación real de la cuenta se conectará después.
+                successMessage = null
+
+                if (errorMessage == null) {
+                    scope.launch {
+                        isLoading = true
+
+                        try {
+                            SupabaseConfig.client.auth.signUpWith(Email) {
+                                this.email = email.trim()
+                                this.password = password
+                            }
+
+                            successMessage =
+                                "Registro enviado. Revisa tu correo si necesitas confirmarlo. / Registration submitted. Check your email if confirmation is required."
+                        } catch (e: Exception) {
+                            errorMessage =
+                                "No se pudo crear la cuenta. Verifica tu conexión y los datos e inténtalo de nuevo. / Could not create account. Check your connection and details, then try again."
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
         ) {
-            Text(text = stringResource(R.string.register_button))
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Text("Crear cuenta / Create account")
+            }
         }
 
-        TextButton(onClick = onBackClick) {
-            Text(text = stringResource(R.string.back_button))
+        TextButton(
+            onClick = onBackClick,
+            enabled = !isLoading
+        ) {
+            Text("Volver / Back")
         }
     }
 }

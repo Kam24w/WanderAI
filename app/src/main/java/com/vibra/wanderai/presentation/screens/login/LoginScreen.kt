@@ -1,3 +1,4 @@
+
 package com.vibra.wanderai.presentation.screens.login
 
 import androidx.compose.foundation.layout.Arrangement
@@ -8,26 +9,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.vibra.wanderai.R
+import com.vibra.wanderai.SupabaseConfig
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onLoginSuccess: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -36,7 +42,7 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.login_title),
+            text = "Iniciar sesión / Sign in",
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -44,38 +50,96 @@ fun LoginScreen(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { email = it },
-            label = { Text("Email") },
+            onValueChange = {
+                email = it
+                errorMessage = null
+            },
+            label = { Text("Correo / Email") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = {
+                password = it
+                errorMessage = null
+            },
             label = { Text("Contraseña / Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            enabled = !isLoading
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
+
+        errorMessage?.let { message ->
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         Button(
-            onClick = { /* Conectaremos la autenticación después */ },
-            modifier = Modifier.fillMaxWidth()
+            onClick = {
+                errorMessage = when {
+                    email.isBlank() || password.isBlank() ->
+                        "Completa todos los campos / Complete all fields"
+
+                    !android.util.Patterns.EMAIL_ADDRESS
+                        .matcher(email.trim())
+                        .matches() ->
+                        "Ingresa un correo válido / Enter a valid email"
+
+                    else -> null
+                }
+
+                if (errorMessage == null) {
+                    val formEmail = email.trim()
+                    val formPassword = password
+
+                    scope.launch {
+                        isLoading = true
+
+                        try {
+                            SupabaseConfig.client.auth.signInWith(Email) {
+                                email = formEmail
+                                password = formPassword
+                            }
+
+                            onLoginSuccess()
+                        } catch (e: Exception) {
+                            errorMessage =
+                                "No se pudo iniciar sesión. Comprueba tu correo y contraseña, e inténtalo de nuevo. / Sign-in failed. Check your email and password, then try again."
+                        } finally {
+                            isLoading = false
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !isLoading
         ) {
-            Text(text = stringResource(R.string.login_button))
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Text("Iniciar sesión / Sign in")
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        androidx.compose.material3.TextButton(
-            onClick = onBackClick
+        TextButton(
+            onClick = onBackClick,
+            enabled = !isLoading
         ) {
-            Text(text = stringResource(R.string.back_button))
+            Text("Volver / Back")
         }
     }
 }
