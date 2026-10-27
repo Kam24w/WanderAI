@@ -109,14 +109,20 @@ fun LoginScreen(
 
                         try {
                             SupabaseConfig.client.auth.signInWith(Email) {
-                                email = formEmail
-                                password = formPassword
+                                this.email = formEmail
+                                this.password = formPassword
                             }
 
                             onLoginSuccess()
                         } catch (e: Exception) {
+                            android.util.Log.e(
+                                "WanderAIAuth",
+                                "Error al iniciar sesión",
+                                e
+                            )
+
                             errorMessage =
-                                "No se pudo iniciar sesión. Comprueba tu correo y contraseña, e inténtalo de nuevo. / Sign-in failed. Check your email and password, then try again."
+                                "No se pudo iniciar sesión. Revisa Logcat para conocer el error. / Sign-in failed. Check Logcat for details."
                         } finally {
                             isLoading = false
                         }

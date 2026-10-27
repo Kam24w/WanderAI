@@ -163,16 +163,28 @@ fun RegisterScreen(
                         isLoading = true
 
                         try {
-                            SupabaseConfig.client.auth.signUpWith(Email) {
-                                this.email = email.trim()
-                                this.password = password
+                            val formEmail = email.trim()
+                            val formPassword = password
+
+                            SupabaseConfig.client.auth.signUpWith(
+                                provider = Email,
+                                redirectUrl = "wanderai://auth"
+                            ) {
+                                this.email = formEmail
+                                this.password = formPassword
                             }
 
                             successMessage =
-                                "Registro enviado. Revisa tu correo si necesitas confirmarlo. / Registration submitted. Check your email if confirmation is required."
+                                "Registro enviado. Revisa tu correo para confirmar la cuenta. / Registration submitted. Check your email to confirm your account."
                         } catch (e: Exception) {
+                            android.util.Log.e(
+                                "WanderAIAuth",
+                                "Error al registrar usuario",
+                                e
+                            )
+
                             errorMessage =
-                                "No se pudo crear la cuenta. Verifica tu conexión y los datos e inténtalo de nuevo. / Could not create account. Check your connection and details, then try again."
+                                "No se pudo crear la cuenta. Revisa Logcat para conocer el error. / Registration failed. Check Logcat for details."
                         } finally {
                             isLoading = false
                         }

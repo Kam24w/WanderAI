@@ -1,4 +1,3 @@
-
 package com.vibra.wanderai
 
 import io.github.jan.supabase.createSupabaseClient

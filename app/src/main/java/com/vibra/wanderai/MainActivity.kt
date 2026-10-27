@@ -24,8 +24,13 @@ import com.vibra.wanderai.data.preferences.LanguagePreferences
 import com.vibra.wanderai.data.preferences.ThemePreferences
 import com.vibra.wanderai.presentation.navigation.AppNavigation
 import com.vibra.wanderai.ui.theme.WanderAITheme
+import android.content.Intent
 
 class MainActivity : ComponentActivity() {
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
