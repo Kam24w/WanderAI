@@ -24,7 +24,8 @@ fun SettingsScreen(
     languageCode: String,
     onThemeChange: (String) -> Unit,
     onLanguageChange: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onLogoutClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -98,11 +99,22 @@ fun SettingsScreen(
             onClick = { onLanguageChange("en") }
         )
 
+        Spacer(modifier = Modifier.height(24.dp))
+
         Button(
             onClick = onBackClick,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.back_button))
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onLogoutClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Cerrar sesión")
         }
     }
 }
