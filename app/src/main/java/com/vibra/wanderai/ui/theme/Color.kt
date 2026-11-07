@@ -76,3 +76,13 @@ val DarkScrim                = Color(0xFF000000)
 val DarkInverseSurface       = Color(0xFFE0E9F4)
 val DarkInverseOnSurface     = Color(0xFF1E2D40)
 val DarkInversePrimary       = NavyDeep
+
+// ── Extended brand accents (design-refs/interfas.png) ─────────────────────────
+val NavyNight     = Color(0xFF0F2440)   // gradient stop under NavyDeep
+val NavyInk       = Color(0xFF07111F)   // camera overlays
+val AmberSignal   = Color(0xFFE8913A)   // Vision detection banner, route line
+val SuccessGreen  = Color(0xFF2E9E6A)
+val SuccessGreenDark = Color(0xFF5FD39B)
+val ParkGreen     = Color(0xFF4CAF7A)
+val MuseumPlum    = Color(0xFF7A5CC2)
+val RestaurantCoral = Color(0xFFE0714F)
