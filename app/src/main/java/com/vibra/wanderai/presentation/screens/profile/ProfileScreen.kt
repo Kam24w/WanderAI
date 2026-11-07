@@ -21,6 +21,9 @@ import androidx.compose.material.icons.outlined.ExploreOff
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Watch
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -49,7 +52,8 @@ import com.vibra.wanderai.ui.theme.TealBrand
 @Composable
 fun ProfileScreen(
     onSettingsClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onVibraClick: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -195,7 +199,30 @@ fun ProfileScreen(
                 tagColor = TealBrand
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(24.dp))
+
+            // Vibra quick-access
+            Button(
+                onClick = onVibraClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .height(52.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = NavyDeep),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Outlined.Watch, null, tint = Color.White,
+                    modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "Vibra Watch",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
 
             OutlinedButton(
                 onClick = onLogoutClick,
