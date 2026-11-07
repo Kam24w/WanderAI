@@ -1,7 +1,11 @@
 package com.vibra.wanderai.presentation.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -21,12 +25,19 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -46,11 +57,13 @@ import com.vibra.wanderai.presentation.screens.register.RegisterScreen
 import com.vibra.wanderai.presentation.screens.scanner.ScannerScreen
 import com.vibra.wanderai.presentation.screens.settings.SettingsScreen
 import com.vibra.wanderai.presentation.screens.welcome.WelcomeScreen
+import com.vibra.wanderai.ui.theme.GoldAccent
 import com.vibra.wanderai.ui.theme.NavyDeep
 import com.vibra.wanderai.ui.theme.TealBrand
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // ── Route constants ───────────────────────────────────────────────────────────
@@ -94,10 +107,37 @@ fun AppNavigation(
     languageCode: String
 ) {
     val sessionStatus by SupabaseConfig.client.auth.sessionStatus.collectAsState()
+    var timedOut by remember { mutableStateOf(false) }
 
-    if (sessionStatus is SessionStatus.Initializing) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = TealBrand)
+    LaunchedEffect(Unit) {
+        delay(3_000)
+        timedOut = true
+    }
+
+    val isLoading = sessionStatus is SessionStatus.Initializing && !timedOut
+
+    if (isLoading) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(listOf(NavyDeep, Color(0xFF0F2440)))
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .background(Color.White.copy(alpha = 0.1f), shape = androidx.compose.foundation.shape.CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("W", color = GoldAccent, fontWeight = FontWeight.Black,
+                        style = MaterialTheme.typography.headlineLarge)
+                }
+                Spacer(Modifier.height(24.dp))
+                CircularProgressIndicator(color = TealBrand, strokeWidth = 3.dp)
+            }
         }
         return
     }
