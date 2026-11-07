@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App -->
     <string name="app_name">WanderAI</string>
+
+    <!-- Welcome -->
     <string name="welcome_title">WanderAI</string>
     <string name="welcome_subtitle">Tu próxima aventura comienza aquí.</string>
     <string name="welcome_description">Descubre lugares, explora nuevas rutas y viaja a tu manera.</string>
     <string name="get_started">Comenzar</string>
+
+    <!-- Home -->
     <string name="home_title">Explora el mundo</string>
     <string name="home_subtitle">¿A dónde te gustaría ir?</string>
     <string name="destination_hint">Escribe un destino</string>
     <string name="explore_button">Explorar</string>
+
+    <!-- Settings -->
     <string name="settings_button">Ajustes</string>
     <string name="settings_title">Ajustes</string>
     <string name="settings_description">Personaliza tu experiencia en WanderAI.</string>
@@ -21,8 +28,28 @@
     <string name="spanish_language">Español</string>
     <string name="english_language">Inglés</string>
     <string name="back_button">Volver</string>
+    <string name="logout_button">Cerrar sesión</string>
+
+    <!-- Auth – Login -->
     <string name="login_button">Iniciar sesión</string>
-    <string name="register_button">Crear cuenta</string>
     <string name="login_title">Bienvenido de nuevo</string>
+    <string name="email_label">Correo electrónico</string>
+    <string name="password_label">Contraseña</string>
+    <string name="login_submit">Iniciar sesión</string>
+
+    <!-- Auth – Register -->
+    <string name="register_button">Crear cuenta</string>
     <string name="register_title">Crear tu cuenta</string>
+    <string name="name_label">Nombre</string>
+    <string name="confirm_password_label">Confirmar contraseña</string>
+    <string name="register_submit">Crear cuenta</string>
+    <string name="register_success">¡Registro enviado! Revisa tu correo para confirmar la cuenta.</string>
+
+    <!-- Validation errors -->
+    <string name="error_empty_fields">Completa todos los campos</string>
+    <string name="error_invalid_email">Ingresa un correo electrónico válido</string>
+    <string name="error_login_failed">Credenciales incorrectas. Inténtalo de nuevo.</string>
+    <string name="error_password_length">La contraseña debe tener al menos 8 caracteres</string>
+    <string name="error_passwords_mismatch">Las contraseñas no coinciden</string>
+    <string name="error_register_failed">No se pudo crear la cuenta. Inténtalo de nuevo.</string>
 </resources>
