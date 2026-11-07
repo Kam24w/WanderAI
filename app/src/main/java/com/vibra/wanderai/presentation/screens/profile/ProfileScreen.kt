@@ -89,39 +89,67 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(NavyDeep, MaterialTheme.colorScheme.background)
+                            colorStops = arrayOf(
+                                0.0f to NavyDeep,
+                                0.7f to Color(0xFF0F2440),
+                                1.0f to MaterialTheme.colorScheme.background
+                            )
                         )
                     )
-                    .padding(vertical = 32.dp),
+                    .padding(top = 28.dp, bottom = 36.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Avatar ring
                     Box(
                         modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(TealBrand),
+                            .size(88.dp)
+                            .background(
+                                Brush.linearGradient(listOf(TealBrand, NavyDeep)),
+                                CircleShape
+                            )
+                            .padding(3.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "C",
-                            color = Color.White,
-                            fontSize = 32.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .clip(CircleShape)
+                                .background(TealBrand),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "C",
+                                color = Color.White,
+                                fontSize = 34.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
                     }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(14.dp))
                     Text(
                         text = "Carlos Mejía",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.headlineSmall,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = "Pasto, Colombia",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.7f)
-                    )
+                    Spacer(Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.LocationOn,
+                            null,
+                            tint = TealBrand,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Pasto, Colombia",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White.copy(alpha = 0.65f)
+                        )
+                    }
                 }
             }
 
