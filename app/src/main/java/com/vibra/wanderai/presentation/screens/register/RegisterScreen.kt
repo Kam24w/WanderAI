@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.wanderai.R
 import com.vibra.wanderai.core.network.SupabaseConfig
-import com.vibra.wanderai.ui.theme.GoldAccent
+import com.vibra.wanderai.presentation.components.WanderLogo
 import com.vibra.wanderai.ui.theme.NavyDeep
 import com.vibra.wanderai.ui.theme.TealBrand
 import com.vibra.wanderai.ui.theme.TealLight
@@ -111,15 +111,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("W", color = GoldAccent, fontSize = 30.sp, fontWeight = FontWeight.Black)
-            }
+            WanderLogo(size = 64.dp, padding = 6.dp)
 
             Spacer(Modifier.height(10.dp))
 
