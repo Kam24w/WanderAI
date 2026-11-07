@@ -9,11 +9,46 @@
     <string name="welcome_description">Discover places, explore new routes, and travel your way.</string>
     <string name="get_started">Get started</string>
 
-    <!-- Home -->
-    <string name="home_title">Explore the world</string>
-    <string name="home_subtitle">Where would you like to go?</string>
-    <string name="destination_hint">Enter a destination</string>
-    <string name="explore_button">Explore</string>
+    <!-- Bottom navigation tabs -->
+    <string name="tab_home">Home</string>
+    <string name="tab_explore">Explore</string>
+    <string name="tab_scanner">Scanner</string>
+    <string name="tab_profile">Profile</string>
+
+    <!-- Home – AI Generator -->
+    <string name="home_greeting">Hello, explorer!</string>
+    <string name="home_subtitle">Generate your AI itinerary</string>
+    <string name="time_available">Time available</string>
+    <string name="budget_label">Budget</string>
+    <string name="max_distance">Max distance</string>
+    <string name="place_type_label">Place type</string>
+    <string name="place_restaurant">Restaurant</string>
+    <string name="place_park">Park</string>
+    <string name="place_museum">Museum</string>
+    <string name="place_tour">Tour</string>
+    <string name="generate_itinerary">Generate Itinerary</string>
+    <string name="select_at_least_one">Select at least one place type</string>
+
+    <!-- Explore -->
+    <string name="explore_title">Explore Pasto</string>
+    <string name="explore_coming_soon">Interactive map coming soon</string>
+    <string name="explore_description">Visualize destinations in real time with AI-powered routes and markers.</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">WanderAI Vision</string>
+    <string name="scanner_instruction">Point at a historic or tourist landmark</string>
+    <string name="scanner_hint">The AI will identify the place and show you its history.</string>
+    <string name="scanner_coming_soon">AI Vision feature coming soon</string>
+
+    <!-- Profile -->
+    <string name="profile_title">My Profile</string>
+    <string name="profile_total_logros">Total achievements</string>
+    <string name="profile_places">Places</string>
+    <string name="profile_exploration_time">Exploration time</string>
+    <string name="profile_distance">Distance</string>
+    <string name="profile_saved_itineraries">Saved itineraries</string>
+    <string name="profile_weekly">Weekly</string>
+    <string name="profile_no_itineraries">You have no saved itineraries yet.</string>
 
     <!-- Settings -->
     <string name="settings_button">Settings</string>
@@ -29,6 +64,7 @@
     <string name="english_language">English</string>
     <string name="back_button">Back</string>
     <string name="logout_button">Log out</string>
+    <string name="settings_account">Account</string>
 
     <!-- Auth – Login -->
     <string name="login_button">Log in</string>
