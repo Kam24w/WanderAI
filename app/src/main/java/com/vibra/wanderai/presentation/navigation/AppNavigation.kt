@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.vibra.wanderai.SupabaseConfig
+import com.vibra.wanderai.core.network.SupabaseConfig
 import com.vibra.wanderai.data.preferences.LanguagePreferences
 import com.vibra.wanderai.data.preferences.ThemePreferences
 import com.vibra.wanderai.presentation.screens.home.HomeScreen
