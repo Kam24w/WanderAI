@@ -106,6 +106,7 @@ val VibraError.messageRes: Int
         VibraError.PROTOCOL_UNSUPPORTED -> R.string.vibra_error_protocol
         VibraError.WRITE_FAILED -> R.string.vibra_error_write
         VibraError.NOT_CONNECTED -> R.string.vibra_error_not_connected
+        VibraError.NO_WATCH_FOUND -> R.string.vibra_error_no_watch
     }
 
 val HapticCommand.icon: ImageVector
