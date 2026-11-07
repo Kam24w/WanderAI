@@ -17,22 +17,41 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.vibra.wanderai.R
 
+/**
+ * @param size       Tamaño del composable
+ * @param padding    Espacio interno entre el borde y la imagen
+ * @param onDark     true  → fondo blanco circular (para pantallas oscuras navy/teal)
+ *                   false → sin fondo, logo directamente sobre el surface
+ */
 @Composable
-fun WanderLogo(size: Dp = 56.dp, padding: Dp = 6.dp) {
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(CircleShape)
-            .background(Color.White),
-        contentAlignment = Alignment.Center
-    ) {
+fun WanderLogo(
+    size: Dp = 56.dp,
+    padding: Dp = 6.dp,
+    onDark: Boolean = false
+) {
+    if (onDark) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(R.drawable.logo_wanderai),
+                contentDescription = "WanderAI",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .size(size - padding * 2)
+                    .padding(padding / 4)
+            )
+        }
+    } else {
         Image(
             painter = painterResource(R.drawable.logo_wanderai),
             contentDescription = "WanderAI",
             contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .size(size - padding * 2)
-                .padding(padding / 2)
+            modifier = Modifier.size(size)
         )
     }
 }
