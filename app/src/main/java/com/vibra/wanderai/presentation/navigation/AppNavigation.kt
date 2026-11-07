@@ -58,7 +58,7 @@ import com.vibra.wanderai.presentation.screens.register.RegisterScreen
 import com.vibra.wanderai.presentation.screens.scanner.ScannerScreen
 import com.vibra.wanderai.presentation.screens.settings.SettingsScreen
 import com.vibra.wanderai.presentation.screens.welcome.WelcomeScreen
-import com.vibra.wanderai.ui.theme.GoldAccent
+import com.vibra.wanderai.presentation.components.WanderLogo
 import com.vibra.wanderai.ui.theme.NavyDeep
 import com.vibra.wanderai.ui.theme.TealBrand
 import io.github.jan.supabase.auth.auth
@@ -128,15 +128,7 @@ fun AppNavigation(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .background(Color.White.copy(alpha = 0.1f), shape = androidx.compose.foundation.shape.CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("W", color = GoldAccent, fontWeight = FontWeight.Black,
-                        style = MaterialTheme.typography.headlineLarge)
-                }
+                WanderLogo(size = 80.dp, padding = 7.dp)
                 Spacer(Modifier.height(24.dp))
                 CircularProgressIndicator(color = TealBrand, strokeWidth = 3.dp)
             }
