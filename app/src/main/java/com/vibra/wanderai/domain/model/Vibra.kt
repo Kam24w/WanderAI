@@ -35,9 +35,12 @@ enum class VibraError {
     PROTOCOL_UNSUPPORTED,
     WRITE_FAILED,
     NOT_CONNECTED,
+    /** Neither BLE nor the Wear OS Data Layer found a watch. */
+    NO_WATCH_FOUND,
 }
 
-enum class HapticIntensity(val level: Int) { SOFT(1), MEDIUM(2), STRONG(3) }
+/** [level] is the BLE frame value; [amplitude] (1..255) drives the vibration motor. */
+enum class HapticIntensity(val level: Int, val amplitude: Int) { SOFT(1, 90), MEDIUM(2, 170), STRONG(3, 255) }
 
 enum class TurnDirection { LEFT, RIGHT }
 
