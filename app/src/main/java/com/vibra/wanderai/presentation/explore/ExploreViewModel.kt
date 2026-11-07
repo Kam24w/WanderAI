@@ -9,6 +9,7 @@ import com.vibra.wanderai.domain.model.WatchSyncStatus
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.PlacesRepository
 import com.vibra.wanderai.domain.repository.VibraRepository
+import com.vibra.wanderai.domain.repository.WearDataLayerRepository
 import com.vibra.wanderai.domain.usecase.ObserveTravelerLocationUseCase
 import com.vibra.wanderai.domain.usecase.SyncItineraryToWatchUseCase
 import com.vibra.wanderai.presentation.common.LocationAwareViewModel
@@ -27,6 +28,8 @@ data class ExploreUiState(
     val location: TravelerLocation = ObserveTravelerLocationUseCase.FALLBACK,
     val connection: VibraConnectionState = VibraConnectionState.Disconnected,
     val syncStatus: WatchSyncStatus = WatchSyncStatus.Idle,
+    /** A Vibra watch is reachable through the Wear OS Data Layer. */
+    val wearConnected: Boolean = false,
     val selectedPlaceId: String? = null,
     val showOnlyRecommended: Boolean = false,
 ) {
@@ -58,6 +61,7 @@ class ExploreViewModel(
     private val itineraryRepository: ItineraryRepository,
     private val vibraRepository: VibraRepository,
     private val syncItineraryToWatch: SyncItineraryToWatchUseCase,
+    wearRepository: WearDataLayerRepository,
     observeTravelerLocation: ObserveTravelerLocationUseCase,
 ) : LocationAwareViewModel(observeTravelerLocation) {
 
@@ -66,15 +70,16 @@ class ExploreViewModel(
 
     val state: StateFlow<ExploreUiState> = combine(
         combine(places, itineraryRepository.activeItinerary, location, ::Triple),
-        combine(vibraRepository.connectionState, vibraRepository.syncStatus, ::Pair),
+        combine(vibraRepository.connectionState, vibraRepository.syncStatus, wearRepository.connectedWatches, ::Triple),
         local,
-    ) { (placeList, itinerary, loc), (connection, sync), ui ->
+    ) { (placeList, itinerary, loc), (connection, sync, watches), ui ->
         ExploreUiState(
             places = placeList,
             activeItinerary = itinerary,
             location = loc,
             connection = connection,
             syncStatus = sync,
+            wearConnected = watches.isNotEmpty(),
             selectedPlaceId = ui.selectedPlaceId,
             showOnlyRecommended = ui.showOnlyRecommended,
         )
