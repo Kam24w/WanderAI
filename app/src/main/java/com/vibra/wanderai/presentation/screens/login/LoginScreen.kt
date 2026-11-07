@@ -1,4 +1,3 @@
-
 package com.vibra.wanderai.presentation.screens.login
 
 import androidx.compose.foundation.layout.Arrangement
@@ -8,17 +7,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.vibra.wanderai.SupabaseConfig
+import com.vibra.wanderai.R
+import com.vibra.wanderai.core.network.SupabaseConfig
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.launch
@@ -28,6 +38,8 @@ fun LoginScreen(
     onBackClick: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
+    val context = LocalContext.current
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -42,7 +54,7 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Iniciar sesión / Sign in",
+            text = stringResource(R.string.login_title),
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -54,10 +66,14 @@ fun LoginScreen(
                 email = it
                 errorMessage = null
             },
-            label = { Text("Correo / Email") },
+            label = { Text(stringResource(R.string.email_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -68,11 +84,15 @@ fun LoginScreen(
                 password = it
                 errorMessage = null
             },
-            label = { Text("Contraseña / Password") },
+            label = { Text(stringResource(R.string.password_label)) },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -90,12 +110,12 @@ fun LoginScreen(
             onClick = {
                 errorMessage = when {
                     email.isBlank() || password.isBlank() ->
-                        "Completa todos los campos / Complete all fields"
+                        context.getString(R.string.error_empty_fields)
 
                     !android.util.Patterns.EMAIL_ADDRESS
                         .matcher(email.trim())
                         .matches() ->
-                        "Ingresa un correo válido / Enter a valid email"
+                        context.getString(R.string.error_invalid_email)
 
                     else -> null
                 }
@@ -106,23 +126,15 @@ fun LoginScreen(
 
                     scope.launch {
                         isLoading = true
-
                         try {
                             SupabaseConfig.client.auth.signInWith(Email) {
                                 this.email = formEmail
                                 this.password = formPassword
                             }
-
                             onLoginSuccess()
                         } catch (e: Exception) {
-                            android.util.Log.e(
-                                "WanderAIAuth",
-                                "Error al iniciar sesión",
-                                e
-                            )
-
-                            errorMessage =
-                                "No se pudo iniciar sesión. Revisa Logcat para conocer el error. / Sign-in failed. Check Logcat for details."
+                            android.util.Log.e("WanderAIAuth", "Login error", e)
+                            errorMessage = context.getString(R.string.error_login_failed)
                         } finally {
                             isLoading = false
                         }
@@ -135,7 +147,7 @@ fun LoginScreen(
             if (isLoading) {
                 CircularProgressIndicator()
             } else {
-                Text("Iniciar sesión / Sign in")
+                Text(stringResource(R.string.login_submit))
             }
         }
 
@@ -145,7 +157,7 @@ fun LoginScreen(
             onClick = onBackClick,
             enabled = !isLoading
         ) {
-            Text("Volver / Back")
+            Text(stringResource(R.string.back_button))
         }
     }
 }
