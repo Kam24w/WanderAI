@@ -89,7 +89,7 @@ fun ExploreScreen(
     val viewModel = wanderViewModel {
         ExploreViewModel(
             it.placesRepository, it.itineraryRepository, it.vibraRepository,
-            it.syncItineraryToWatch, it.observeTravelerLocation,
+            it.syncItineraryToWatch, it.wearDataLayerRepository, it.observeTravelerLocation,
         )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -217,7 +217,6 @@ fun ExploreScreen(
                 }
                 WatchSyncCard(
                     state = state,
-                    onConnect = onOpenVibra,
                     onSync = viewModel::syncToWatch,
                     onGenerate = onGenerateItinerary,
                 )
@@ -279,12 +278,12 @@ private fun PlaceDetailCard(place: Place, distanceMeters: Int, onClose: () -> Un
 @Composable
 private fun WatchSyncCard(
     state: ExploreUiState,
-    onConnect: () -> Unit,
     onSync: () -> Unit,
     onGenerate: () -> Unit,
 ) {
     val colors = WanderTheme.colors
-    val connected = state.connection is VibraConnectionState.Connected
+    // Either the BLE/simulated Vibra or the Wear OS app can receive the route.
+    val connected = state.connection is VibraConnectionState.Connected || state.wearConnected
     val itinerary = state.activeItinerary
     val sync = state.syncStatus
 
@@ -297,7 +296,6 @@ private fun WatchSyncCard(
 
     val message = when {
         itinerary == null -> stringResource(R.string.sync_msg_no_itinerary)
-        !connected -> stringResource(R.string.sync_msg_disconnected)
         sync is WatchSyncStatus.Sending -> stringResource(R.string.sync_msg_sending)
         state.isActiveItinerarySynced && sync is WatchSyncStatus.Synced ->
             stringResource(R.string.sync_msg_synced, sync.firstStopWalkingMinutes, sync.firstStopName)
@@ -346,7 +344,7 @@ private fun WatchSyncCard(
 
             val (label, action, icon) = when {
                 itinerary == null -> Triple(stringResource(R.string.sync_action_generate), onGenerate, Icons.Outlined.AutoAwesome)
-                !connected -> Triple(stringResource(R.string.sync_action_connect), onConnect, Icons.Outlined.Watch)
+                // No BLE link required: the route always goes out over the Wear OS Data Layer.
                 state.isActiveItinerarySynced -> Triple(stringResource(R.string.sync_action_resend), onSync, Icons.Outlined.Sync)
                 else -> Triple(stringResource(R.string.sync_action_sync), onSync, Icons.Outlined.Sync)
             }
