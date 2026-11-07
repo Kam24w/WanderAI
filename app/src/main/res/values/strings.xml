@@ -81,6 +81,32 @@
     <string name="register_submit">Crear cuenta</string>
     <string name="register_success">¡Registro enviado! Revisa tu correo para confirmar la cuenta.</string>
 
+    <!-- Vibra Watch Integration -->
+    <string name="vibra_title">Vibra Watch</string>
+    <string name="vibra_subtitle">Conecta tu reloj inteligente</string>
+    <string name="vibra_description">WanderAI envía instrucciones de navegación a tu Vibra para guiarte mediante retroalimentación háptica.</string>
+    <string name="vibra_connect">Buscar dispositivos</string>
+    <string name="vibra_disconnect">Desconectar</string>
+    <string name="vibra_scanning">Buscando dispositivos Vibra…</string>
+    <string name="vibra_connecting">Conectando…</string>
+    <string name="vibra_connected">Vibra conectado</string>
+    <string name="vibra_disconnected">Sin dispositivo conectado</string>
+    <string name="vibra_haptic_intensity">Intensidad háptica</string>
+    <string name="vibra_haptic_soft">Suave</string>
+    <string name="vibra_haptic_medium">Media</string>
+    <string name="vibra_haptic_strong">Fuerte</string>
+    <string name="vibra_sync_status">Watch Sync Status</string>
+    <string name="vibra_next_point">Próximo punto</string>
+    <string name="vibra_synced">Sincronizado</string>
+    <string name="vibra_guide_active">Guía háptica activa</string>
+    <string name="vibra_no_route">Sin ruta activa — genera un itinerario primero</string>
+    <string name="vibra_arrow_instruction">Gira a la derecha en 70 m</string>
+    <string name="vibra_distance_label">Distancia al próximo punto</string>
+    <string name="vibra_device_name">Vibra Gen 2</string>
+    <string name="vibra_battery">Batería: 84%%</string>
+    <string name="explore_watch_sync">Watch Sync</string>
+    <string name="explore_connect_vibra">Conectar Vibra</string>
+
     <!-- Validation errors -->
     <string name="error_empty_fields">Completa todos los campos</string>
     <string name="error_invalid_email">Ingresa un correo electrónico válido</string>
