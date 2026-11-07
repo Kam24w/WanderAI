@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
+    <!-- WanderAI Brand -->
+    <color name="navy_deep">#FF1B3A6B</color>
+    <color name="navy_mid">#FF254D8E</color>
+    <color name="teal_brand">#FF2A9D8F</color>
+    <color name="teal_light">#FF4ECDC4</color>
+    <color name="gold_accent">#FFD4A843</color>
+
+    <!-- Backgrounds -->
+    <color name="light_background">#FFF8FAFC</color>
+    <color name="dark_background">#FF0D1B2A</color>
+    <color name="dark_surface">#FF152030</color>
+
+    <!-- Utility -->
     <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
 </resources>
