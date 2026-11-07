@@ -1,34 +1,44 @@
 package com.vibra.wanderai.presentation.screens.welcome
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.wanderai.R
+import com.vibra.wanderai.ui.theme.DarkBackground
 import com.vibra.wanderai.ui.theme.GoldAccent
 import com.vibra.wanderai.ui.theme.NavyDeep
 import com.vibra.wanderai.ui.theme.TealBrand
+import com.vibra.wanderai.ui.theme.TealLight
 
 @Composable
 fun WelcomeScreen(
@@ -37,105 +47,131 @@ fun WelcomeScreen(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp, vertical = 48.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // ── Logo placeholder ─────────────────────────────────────────────────
-        // Replace this Box with an Image(painter = painterResource(R.drawable.ic_logo))
-        // once the logo PNG/SVG is added to res/drawable/.
-        Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(NavyDeep, TealBrand)
+            .background(
+                Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0.0f to NavyDeep,
+                        0.55f to Color(0xFF0F2440),
+                        1.0f to DarkBackground
                     )
+                )
+            )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.weight(1f))
+
+            // ── Logo ─────────────────────────────────────────────────────────
+            Box(
+                modifier = Modifier
+                    .size(104.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.08f))
+                    .border(2.dp, Color.White.copy(alpha = 0.18f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "W",
+                    color = GoldAccent,
+                    fontSize = 50.sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // ── Brand name ───────────────────────────────────────────────────
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.Bold)) {
+                        append("Wander")
+                    }
+                    withStyle(SpanStyle(color = TealLight, fontWeight = FontWeight.Bold)) {
+                        append("AI")
+                    }
+                },
+                fontSize = 42.sp
+            )
+
+            Spacer(Modifier.height(14.dp))
+
+            Text(
+                text = stringResource(R.string.welcome_subtitle),
+                fontSize = 16.sp,
+                color = Color.White.copy(alpha = 0.8f),
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Medium
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                text = stringResource(R.string.welcome_description),
+                fontSize = 14.sp,
+                color = Color.White.copy(alpha = 0.5f),
+                textAlign = TextAlign.Center,
+                lineHeight = 20.sp
+            )
+
+            Spacer(Modifier.weight(1f))
+
+            // ── CTA Buttons ──────────────────────────────────────────────────
+            Button(
+                onClick = onGetStarted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = TealBrand),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.get_started),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onLoginClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.5.dp,
+                    Color.White.copy(alpha = 0.4f)
                 ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "W",
-                color = GoldAccent,
-                fontSize = 44.sp,
-                fontWeight = FontWeight.Black
-            )
-        }
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.login_button),
+                    fontSize = 16.sp,
+                    color = Color.White
+                )
+            }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(Modifier.height(4.dp))
 
-        // ── Brand name ───────────────────────────────────────────────────────
-        Text(
-            text = "Wander",
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Bold,
-            color = NavyDeep
-        )
-        Text(
-            text = "AI",
-            fontSize = 36.sp,
-            fontWeight = FontWeight.Bold,
-            color = TealBrand,
-            modifier = Modifier.padding(top = (-10).dp)
-        )
+            TextButton(onClick = onRegisterClick) {
+                Text(
+                    text = stringResource(R.string.register_button),
+                    color = Color.White.copy(alpha = 0.55f),
+                    fontSize = 14.sp
+                )
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = stringResource(R.string.welcome_subtitle),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.welcome_description),
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(40.dp))
-
-        // ── Actions ──────────────────────────────────────────────────────────
-        Button(
-            onClick = onGetStarted,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = stringResource(R.string.get_started),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedButton(
-            onClick = onLoginClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = stringResource(R.string.login_button),
-                style = MaterialTheme.typography.labelLarge
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedButton(
-            onClick = onRegisterClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = stringResource(R.string.register_button),
-                style = MaterialTheme.typography.labelLarge
-            )
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
