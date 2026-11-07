@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App -->
     <string name="app_name">WanderAI</string>
+
+    <!-- Welcome -->
     <string name="welcome_title">WanderAI</string>
     <string name="welcome_subtitle">Your next adventure starts here.</string>
     <string name="welcome_description">Discover places, explore new routes, and travel your way.</string>
     <string name="get_started">Get started</string>
+
+    <!-- Home -->
     <string name="home_title">Explore the world</string>
     <string name="home_subtitle">Where would you like to go?</string>
     <string name="destination_hint">Enter a destination</string>
     <string name="explore_button">Explore</string>
+
+    <!-- Settings -->
     <string name="settings_button">Settings</string>
     <string name="settings_title">Settings</string>
     <string name="settings_description">Customize your WanderAI experience.</string>
@@ -21,8 +28,28 @@
     <string name="spanish_language">Spanish</string>
     <string name="english_language">English</string>
     <string name="back_button">Back</string>
+    <string name="logout_button">Log out</string>
+
+    <!-- Auth – Login -->
     <string name="login_button">Log in</string>
-    <string name="register_button">Create account</string>
     <string name="login_title">Welcome back</string>
+    <string name="email_label">Email address</string>
+    <string name="password_label">Password</string>
+    <string name="login_submit">Sign in</string>
+
+    <!-- Auth – Register -->
+    <string name="register_button">Create account</string>
     <string name="register_title">Create your account</string>
+    <string name="name_label">Name</string>
+    <string name="confirm_password_label">Confirm password</string>
+    <string name="register_submit">Create account</string>
+    <string name="register_success">Registration submitted! Check your email to confirm your account.</string>
+
+    <!-- Validation errors -->
+    <string name="error_empty_fields">Please fill in all fields</string>
+    <string name="error_invalid_email">Enter a valid email address</string>
+    <string name="error_login_failed">Incorrect credentials. Please try again.</string>
+    <string name="error_password_length">Password must be at least 8 characters</string>
+    <string name="error_passwords_mismatch">Passwords do not match</string>
+    <string name="error_register_failed">Could not create account. Please try again.</string>
 </resources>
