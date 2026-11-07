@@ -1,97 +1,71 @@
-
 package com.vibra.wanderai
 
-import android.content.Context
-import android.content.res.Configuration
+import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
-import androidx.core.os.ConfigurationCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
-import com.vibra.wanderai.data.preferences.LanguagePreferences
-import com.vibra.wanderai.data.preferences.ThemePreferences
-import com.vibra.wanderai.presentation.navigation.AppNavigation
+import com.vibra.wanderai.core.network.SupabaseConfig
+import com.vibra.wanderai.domain.model.ThemeMode
+import com.vibra.wanderai.presentation.common.LocalAppContainer
+import com.vibra.wanderai.presentation.root.WanderAIRoot
 import com.vibra.wanderai.ui.theme.WanderAITheme
-import android.content.Intent
+import io.github.jan.supabase.auth.handleDeeplinks
 
-class MainActivity : ComponentActivity() {
+/**
+ * AppCompatActivity (not ComponentActivity) so AppCompatDelegate's per-app
+ * language API also works on Android 12 and below.
+ */
+class MainActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        handleAuthDeeplink(intent)
+
+        val container = (application as WanderAIApplication).container
+
+        setContent {
+            val themeMode by container.settingsRepository.themeMode
+                .collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+            val darkTheme = when (themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            DisposableEffect(darkTheme) {
+                val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme }
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose {}
+            }
+
+            CompositionLocalProvider(LocalAppContainer provides container) {
+                WanderAITheme(darkTheme = darkTheme) {
+                    WanderAIRoot()
+                }
+            }
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        handleAuthDeeplink(intent)
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
-        val languagePreferences = LanguagePreferences(applicationContext)
-        val themePreferences = ThemePreferences(applicationContext)
-
-        setContent {
-            val themeMode by themePreferences.themeMode
-                .collectAsStateWithLifecycle(initialValue = "system")
-
-            val languageCode by languagePreferences.languageCode
-                .collectAsStateWithLifecycle(initialValue = "system")
-
-            val configuration = Configuration(
-                LocalConfiguration.current
-            )
-
-            if (languageCode == "system") {
-                val systemConfiguration = Configuration(
-                    resources.configuration
-                )
-                configuration.setLocales(systemConfiguration.locales)
-            } else {
-                configuration.setLocale(
-                    java.util.Locale.forLanguageTag(languageCode)
-                )
-            }
-
-            val localizedContext = LocalContext.current
-                .createConfigurationContext(configuration)
-
-            val localizedResources = localizedContext.resources
-
-            CompositionLocalProvider(
-                LocalConfiguration provides configuration,
-                LocalContext provides localizedContext,
-                LocalResources provides localizedResources
-            ) {
-                val darkTheme = when (themeMode) {
-                    "light" -> false
-                    "dark" -> true
-                    else -> isSystemInDarkTheme()
-                }
-
-                WanderAITheme(darkTheme = darkTheme) {
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
-                        AppNavigation(
-                            themePreferences = themePreferences,
-                            languagePreferences = languagePreferences,
-                            coroutineScope = lifecycleScope,
-                            themeMode = themeMode,
-                            languageCode = languageCode
-                        )
-                    }
-                }
-            }
+    /** Completes e-mail confirmation links (wanderai://auth#access_token=…). */
+    private fun handleAuthDeeplink(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme == SupabaseConfig.DEEPLINK_SCHEME && data.host == SupabaseConfig.DEEPLINK_HOST) {
+            SupabaseConfig.client.handleDeeplinks(intent)
         }
     }
 }
