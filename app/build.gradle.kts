@@ -74,6 +74,10 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
 
+    // Wear OS Data Layer — Vibra watch app
+    implementation(libs.play.services.wearable)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     // CameraX — WanderAI Vision viewfinder
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
