@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
@@ -18,15 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vibra.wanderai.ui.theme.GoldAccent
 import com.vibra.wanderai.ui.theme.TealBrand
 
 @Composable
@@ -53,21 +49,7 @@ fun WanderTopBar(
             }
             Spacer(Modifier.width(8.dp))
         } else {
-            // Logo circle
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "W",
-                    color = GoldAccent,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Black
-                )
-            }
+            WanderLogo(size = 32.dp, padding = 3.dp)
             Spacer(Modifier.width(10.dp))
         }
 
