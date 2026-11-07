@@ -50,6 +50,7 @@ import com.vibra.wanderai.core.network.SupabaseConfig
 import com.vibra.wanderai.data.preferences.LanguagePreferences
 import com.vibra.wanderai.data.preferences.ThemePreferences
 import com.vibra.wanderai.presentation.screens.explore.ExploreScreen
+import com.vibra.wanderai.presentation.screens.vibra.VibraIntegrationScreen
 import com.vibra.wanderai.presentation.screens.home.HomeScreen
 import com.vibra.wanderai.presentation.screens.login.LoginScreen
 import com.vibra.wanderai.presentation.screens.profile.ProfileScreen
@@ -73,6 +74,7 @@ private object Routes {
     const val REGISTER = "register"
     const val MAIN = "main"
     const val SETTINGS = "settings"
+    const val VIBRA = "vibra"
 }
 
 private object TabRoutes {
@@ -172,9 +174,14 @@ fun AppNavigation(
             RegisterScreen(onBackClick = { navController.popBackStack() })
         }
 
+        composable(Routes.VIBRA) {
+            VibraIntegrationScreen(onBackClick = { navController.popBackStack() })
+        }
+
         composable(Routes.MAIN) {
             MainScreen(
                 onSettingsClick = { navController.navigate(Routes.SETTINGS) },
+                onVibraClick = { navController.navigate(Routes.VIBRA) },
                 onLogoutClick = {
                     coroutineScope.launch {
                         SupabaseConfig.client.auth.signOut()
@@ -212,6 +219,7 @@ fun AppNavigation(
 @Composable
 private fun MainScreen(
     onSettingsClick: () -> Unit,
+    onVibraClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
     val tabNavController = rememberNavController()
@@ -271,7 +279,7 @@ private fun MainScreen(
                 HomeScreen(onSettingsClick = onSettingsClick)
             }
             composable(TabRoutes.EXPLORE) {
-                ExploreScreen()
+                ExploreScreen(onVibraClick = onVibraClick)
             }
             composable(TabRoutes.SCANNER) {
                 ScannerScreen()
@@ -279,7 +287,8 @@ private fun MainScreen(
             composable(TabRoutes.PROFILE) {
                 ProfileScreen(
                     onSettingsClick = onSettingsClick,
-                    onLogoutClick = onLogoutClick
+                    onLogoutClick = onLogoutClick,
+                    onVibraClick = onVibraClick
                 )
             }
         }
