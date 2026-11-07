@@ -77,7 +77,8 @@ import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.HapticCommand
 import com.vibra.wanderai.domain.model.HapticIntensity
 import com.vibra.wanderai.domain.model.TurnDirection
-import com.vibra.wanderai.domain.model.VibraConnectionState
+import com.vibra.wanderai.domain.model.VibraLinkState
+import com.vibra.wanderai.domain.model.VibraTransport
 import com.vibra.wanderai.domain.model.VibraDevice
 import com.vibra.wanderai.domain.model.VibraError
 import com.vibra.wanderai.domain.model.WatchSyncStatus
@@ -103,24 +104,30 @@ private const val TEST_DISTANCE_METERS = 50
 @Composable
 fun VibraScreen(onGenerateItinerary: () -> Unit) {
     val viewModel = wanderViewModel {
-        VibraViewModel(it.vibraRepository, it.itineraryRepository, it.syncItineraryToWatch, it.observeTravelerLocation)
+        VibraViewModel(
+            it.vibraRepository, it.itineraryRepository, it.syncItineraryToWatch,
+            it.wearDataLayerRepository, it.navigationGuidance, it.vibraLinkManager, it.observeTravelerLocation,
+        )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val enableBluetooth = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) viewModel.startScan()
+        // Bluetooth left off (common on emulators): go straight to the Data Layer fallback.
+        if (result.resultCode == Activity.RESULT_OK) viewModel.search() else viewModel.searchDataLayerOnly()
     }
     val bluetoothPermission = rememberPermissionState(AppPermissions.bluetooth) { granted ->
-        if (granted) {
-            if (viewModel.isBluetoothEnabled()) viewModel.startScan()
-            else enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        when {
+            !granted -> viewModel.searchDataLayerOnly()
+            viewModel.isBluetoothEnabled() -> viewModel.search()
+            else -> enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
         }
     }
     val startScan: () -> Unit = {
         when {
+            !state.bluetoothSupported -> viewModel.search() // no BLE radio: VibraLinkManager uses the Data Layer
             !bluetoothPermission.isGranted -> bluetoothPermission.request()
             !viewModel.isBluetoothEnabled() -> enableBluetooth.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
-            else -> viewModel.startScan()
+            else -> viewModel.search()
         }
     }
     LaunchedEffect(Unit) { viewModel.refreshLocation() }
@@ -141,8 +148,8 @@ fun VibraScreen(onGenerateItinerary: () -> Unit) {
         ) {
             ConnectionHero(state = state)
 
-            when (val connection = state.connection) {
-                is VibraConnectionState.Connected -> OutlinedButton(
+            when (val link = state.link) {
+                is VibraLinkState.Linked -> if (link.transport != VibraTransport.DATA_LAYER) OutlinedButton(
                     onClick = viewModel::disconnect,
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.6f)),
@@ -154,45 +161,41 @@ fun VibraScreen(onGenerateItinerary: () -> Unit) {
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.vibra_disconnect), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
                 }
-                VibraConnectionState.Scanning -> PrimaryButton(
+                VibraLinkState.ScanningBle -> PrimaryButton(
                     text = stringResource(R.string.vibra_stop_scan),
                     onClick = viewModel::stopScan,
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 )
-                is VibraConnectionState.Connecting -> PrimaryButton(
+                VibraLinkState.CheckingDataLayer -> PrimaryButton(
+                    text = stringResource(R.string.vibra_checking_data_layer),
+                    onClick = {},
+                    loading = true,
+                )
+                is VibraLinkState.Connecting -> PrimaryButton(
                     text = stringResource(R.string.vibra_connecting),
                     onClick = {},
                     loading = true,
                 )
-                is VibraConnectionState.Failed -> {
-                    ErrorBanner(connection.error)
-                    ScanActions(
-                        bluetoothSupported = state.bluetoothSupported,
-                        onScan = startScan,
-                        onSimulator = viewModel::connectSimulator,
-                    )
+                is VibraLinkState.Failed -> {
+                    ErrorBanner(link.error)
+                    ScanActions(onScan = startScan, onSimulator = viewModel::connectSimulator)
                 }
-                VibraConnectionState.Disconnected -> ScanActions(
-                    bluetoothSupported = state.bluetoothSupported,
-                    onScan = startScan,
-                    onSimulator = viewModel::connectSimulator,
-                )
+                VibraLinkState.Idle -> ScanActions(onScan = startScan, onSimulator = viewModel::connectSimulator)
             }
 
-            AnimatedVisibility(visible = !state.isConnected && state.devices.isNotEmpty()) {
+            AnimatedVisibility(visible = state.link !is VibraLinkState.Linked && state.devices.isNotEmpty()) {
                 DeviceList(devices = state.devices, onConnect = viewModel::connect)
             }
 
-            if (state.isConnected) {
-                NavigationSyncCard(
-                    state = state,
-                    onSync = viewModel::syncItinerary,
-                    onGenerate = onGenerateItinerary,
-                )
-                IntensityCard(selected = state.intensity, onSelect = viewModel::setIntensity)
-                TestPadCard(state = state, onSend = viewModel::send)
-            }
+            // Always available: cues go out over the Wear OS Data Layer even without a BLE/simulated link.
+            NavigationSyncCard(
+                state = state,
+                onSync = viewModel::syncItinerary,
+                onGenerate = onGenerateItinerary,
+            )
+            IntensityCard(selected = state.intensity, onSelect = viewModel::setIntensity)
+            TestPadCard(state = state, onSend = viewModel::send)
 
             HowItWorksCard()
             Spacer(Modifier.height(4.dp))
@@ -205,17 +208,18 @@ fun VibraScreen(onGenerateItinerary: () -> Unit) {
 @Composable
 private fun ConnectionHero(state: VibraUiState) {
     val colors = WanderTheme.colors
-    val connection = state.connection
-    val (statusText, statusColor) = when (connection) {
-        is VibraConnectionState.Connected -> stringResource(R.string.vibra_connected) to colors.success
-        is VibraConnectionState.Connecting -> stringResource(R.string.vibra_connecting) to colors.brandGold
-        VibraConnectionState.Scanning -> stringResource(R.string.vibra_scanning) to colors.brandTeal
-        is VibraConnectionState.Failed -> stringResource(R.string.vibra_status_error) to MaterialTheme.colorScheme.error
-        VibraConnectionState.Disconnected -> stringResource(R.string.vibra_disconnected) to Color.White.copy(alpha = 0.6f)
+    val link = state.link
+    val (statusText, statusColor) = when (link) {
+        is VibraLinkState.Linked -> stringResource(R.string.vibra_connected) to colors.success
+        is VibraLinkState.Connecting -> stringResource(R.string.vibra_connecting) to colors.brandGold
+        VibraLinkState.ScanningBle -> stringResource(R.string.vibra_scanning) to colors.brandTeal
+        VibraLinkState.CheckingDataLayer -> stringResource(R.string.vibra_checking_data_layer) to colors.brandTeal
+        is VibraLinkState.Failed -> stringResource(R.string.vibra_status_error) to MaterialTheme.colorScheme.error
+        VibraLinkState.Idle -> stringResource(R.string.vibra_disconnected) to Color.White.copy(alpha = 0.6f)
     }
-    val device = when (connection) {
-        is VibraConnectionState.Connected -> connection.device
-        is VibraConnectionState.Connecting -> connection.device
+    val deviceName = when (link) {
+        is VibraLinkState.Linked -> link.name
+        is VibraLinkState.Connecting -> link.device.name
         else -> null
     }
 
@@ -228,7 +232,7 @@ private fun ConnectionHero(state: VibraUiState) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             WatchIllustration(
-                active = connection is VibraConnectionState.Connected,
+                active = link is VibraLinkState.Linked,
                 pulsing = state.isBusy,
                 icon = state.lastEvent?.command?.icon ?: Icons.Outlined.Watch,
             )
@@ -241,23 +245,25 @@ private fun ConnectionHero(state: VibraUiState) {
                     fontWeight = FontWeight.ExtraBold,
                 )
                 Text(
-                    text = device?.name ?: stringResource(R.string.vibra_device_generic),
+                    text = deviceName ?: stringResource(R.string.vibra_device_generic),
                     color = Color.White,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                 )
                 Spacer(Modifier.height(8.dp))
                 StatusPill(text = statusText, color = statusColor, contentColor = Color.White, container = Color.White.copy(alpha = 0.12f))
-                if (connection is VibraConnectionState.Connected) {
+                if (link is VibraLinkState.Linked) {
                     Spacer(Modifier.height(10.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        connection.batteryPercent?.let {
+                        link.batteryPercent?.let {
                             HeroMetric(Icons.Outlined.Battery5Bar, "$it%")
                         }
-                        HeroMetric(
-                            if (connection.device.isSimulated) Icons.Outlined.PhoneAndroid else Icons.Outlined.Bluetooth,
-                            stringResource(if (connection.device.isSimulated) R.string.vibra_simulated else R.string.vibra_ble),
-                        )
+                        val (icon, label) = when (link.transport) {
+                            VibraTransport.BLE -> Icons.Outlined.Bluetooth to R.string.vibra_ble
+                            VibraTransport.SIMULATOR -> Icons.Outlined.PhoneAndroid to R.string.vibra_simulated
+                            VibraTransport.DATA_LAYER -> Icons.Outlined.Watch to R.string.vibra_data_layer
+                        }
+                        HeroMetric(icon, stringResource(label))
                     }
                 }
             }
@@ -319,15 +325,14 @@ private fun WatchIllustration(active: Boolean, pulsing: Boolean, icon: ImageVect
 // ── Discovery ─────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ScanActions(bluetoothSupported: Boolean, onScan: () -> Unit, onSimulator: () -> Unit) {
+private fun ScanActions(onScan: () -> Unit, onSimulator: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (bluetoothSupported) {
-            PrimaryButton(
-                text = stringResource(R.string.vibra_scan),
-                icon = Icons.AutoMirrored.Outlined.BluetoothSearching,
-                onClick = onScan,
-            )
-        }
+        // Shown even without a BLE radio: the search then checks Wear OS Data Layer nodes.
+        PrimaryButton(
+            text = stringResource(R.string.vibra_scan),
+            icon = Icons.AutoMirrored.Outlined.BluetoothSearching,
+            onClick = onScan,
+        )
         TextButton(onClick = onSimulator, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Outlined.Vibration, null, tint = WanderTheme.colors.brandTeal, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
@@ -386,6 +391,17 @@ private fun NavigationSyncCard(state: VibraUiState, onSync: () -> Unit, onGenera
     val itinerary = state.activeItinerary
     val sync = state.syncStatus
     SectionCard(title = stringResource(R.string.vibra_nav_title), icon = Icons.Outlined.Sync, iconTint = WanderTheme.colors.accentWarm) {
+        if (state.isWearConnected || state.guidancePaused) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                state.wearWatches.firstOrNull()?.let { watch ->
+                    StatusPill(text = stringResource(R.string.wear_watch_connected, watch.displayName), color = WanderTheme.colors.brandTeal)
+                }
+                if (state.guidancePaused) {
+                    StatusPill(text = stringResource(R.string.wear_guidance_paused), color = WanderTheme.colors.brandGold)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
         if (itinerary == null) {
             Text(stringResource(R.string.vibra_no_route), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(12.dp))
