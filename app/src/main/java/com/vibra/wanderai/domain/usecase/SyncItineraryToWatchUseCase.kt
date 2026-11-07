@@ -11,25 +11,35 @@ import com.vibra.wanderai.domain.repository.VibraRepository
 import kotlin.math.abs
 
 /**
- * Sends an itinerary header plus the first navigation cue to Vibra and keeps
- * [VibraRepository.syncStatus] up to date for every screen that shows it.
+ * Sends an itinerary to Vibra over every available transport and keeps
+ * [VibraRepository.syncStatus] up to date for every screen that shows it:
+ *  - Wear OS Data Layer: first cue via [NavigationGuidanceController] (the route
+ *    DataItem is mirrored by the controller from the active itinerary);
+ *  - BLE (or the on-phone simulator): itinerary header plus the first cue.
+ *
+ * The sync succeeds when at least one transport delivered it.
  */
 class SyncItineraryToWatchUseCase(
     private val vibraRepository: VibraRepository,
+    private val guidance: NavigationGuidanceController,
 ) {
     suspend operator fun invoke(itinerary: Itinerary, origin: GeoPoint): Result<Unit> {
         val first = itinerary.stops.firstOrNull()
             ?: return Result.failure(IllegalArgumentException("Empty itinerary"))
 
-        if (vibraRepository.connectionState.value !is VibraConnectionState.Connected) {
-            vibraRepository.updateSyncStatus(WatchSyncStatus.Failed(VibraError.NOT_CONNECTED))
-            return Result.failure(IllegalStateException("Vibra not connected"))
-        }
+        val firstCue = firstInstruction(itinerary, origin)
+        val bleConnected = vibraRepository.connectionState.value is VibraConnectionState.Connected
 
         vibraRepository.updateSyncStatus(WatchSyncStatus.Sending)
-        val result = vibraRepository
-            .send(HapticCommand.ItinerarySync(itinerary.stops.size, first.distanceMeters))
-            .mapCatching { vibraRepository.send(firstInstruction(itinerary, origin)).getOrThrow() }
+        val wearDelivered = guidance.startRoute(firstCue).isSuccess
+        val bleResult = if (bleConnected) {
+            vibraRepository
+                .send(HapticCommand.ItinerarySync(itinerary.stops.size, first.distanceMeters))
+                .mapCatching { vibraRepository.send(firstCue).getOrThrow() }
+        } else {
+            Result.failure(IllegalStateException("Vibra not connected over BLE"))
+        }
+        val result = if (wearDelivered) Result.success(Unit) else bleResult
 
         vibraRepository.updateSyncStatus(
             result.fold(
@@ -41,7 +51,9 @@ class SyncItineraryToWatchUseCase(
                         firstStopWalkingMinutes = first.walkingMinutes,
                     )
                 },
-                onFailure = { WatchSyncStatus.Failed(VibraError.WRITE_FAILED) },
+                onFailure = {
+                    WatchSyncStatus.Failed(if (bleConnected) VibraError.WRITE_FAILED else VibraError.NOT_CONNECTED)
+                },
             )
         )
         return result
