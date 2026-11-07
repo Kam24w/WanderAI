@@ -167,6 +167,9 @@
     <string name="vibra_error_protocol">El dispositivo no expone el servicio háptico de Vibra.</string>
     <string name="vibra_error_write">No se pudo enviar la instrucción al reloj.</string>
     <string name="vibra_error_not_connected">Conecta tu Vibra antes de sincronizar.</string>
+    <string name="vibra_error_no_watch">No encontramos tu Vibra ni por Bluetooth ni por Wear OS. Verifica que esté encendido y emparejado.</string>
+    <string name="vibra_checking_data_layer">Buscando reloj Wear OS…</string>
+    <string name="vibra_data_layer">Wear OS Data Layer</string>
     <string name="haptic_turn_left">Gira a la izquierda en %1$s</string>
     <string name="haptic_turn_right">Gira a la derecha en %1$s</string>
     <string name="haptic_straight">Sigue recto %1$s</string>
@@ -176,6 +179,11 @@
         <item quantity="other">Itinerario de %1$d paradas</item>
     </plurals>
     <string name="haptic_ping">Señal de prueba</string>
+    <string name="wear_instruction_u_turn">Da la vuelta en U en %1$s</string>
+    <string name="wear_instruction_alert">Atención: revisa tu ruta en el teléfono</string>
+    <string name="wear_guidance_paused">Guía pausada desde el reloj</string>
+    <string name="wear_guidance_resumed">Guía reanudada desde el reloj</string>
+    <string name="wear_watch_connected">Wear OS · %1$s</string>
 
     <!-- Perfil y logros -->
     <string name="profile_city">Pasto, Colombia</string>
