@@ -114,7 +114,7 @@ fun SettingsScreen(
             onClick = onLogoutClick,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Cerrar sesión")
+            Text(stringResource(R.string.logout_button))
         }
     }
 }
