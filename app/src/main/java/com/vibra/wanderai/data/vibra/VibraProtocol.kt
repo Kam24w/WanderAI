@@ -75,11 +75,6 @@ object VibraProtocol {
             is HapticCommand.ItinerarySync -> longArrayOf(0, 60, 80, 220)
             HapticCommand.Ping -> longArrayOf(0, 90)
         }
-        val amplitude = when (intensity) {
-            HapticIntensity.SOFT -> 90
-            HapticIntensity.MEDIUM -> 170
-            HapticIntensity.STRONG -> 255
-        }
-        return timings to amplitude
+        return timings to intensity.amplitude
     }
 }
