@@ -1,4 +1,3 @@
-
 package com.vibra.wanderai.presentation.screens.register
 
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -16,19 +16,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.vibra.wanderai.SupabaseConfig
+import com.vibra.wanderai.R
+import com.vibra.wanderai.core.network.SupabaseConfig
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.coroutines.launch
-import io.github.jan.supabase.auth.auth
 
 @Composable
 fun RegisterScreen(
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -47,7 +59,7 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Crear cuenta / Create account",
+            text = stringResource(R.string.register_title),
             style = MaterialTheme.typography.headlineMedium
         )
 
@@ -60,10 +72,11 @@ fun RegisterScreen(
                 errorMessage = null
                 successMessage = null
             },
-            label = { Text("Nombre / Name") },
+            label = { Text(stringResource(R.string.name_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -75,10 +88,14 @@ fun RegisterScreen(
                 errorMessage = null
                 successMessage = null
             },
-            label = { Text("Correo / Email") },
+            label = { Text(stringResource(R.string.email_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -90,11 +107,15 @@ fun RegisterScreen(
                 errorMessage = null
                 successMessage = null
             },
-            label = { Text("Contraseña / Password") },
+            label = { Text(stringResource(R.string.password_label)) },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Next
+            )
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -106,11 +127,15 @@ fun RegisterScreen(
                 errorMessage = null
                 successMessage = null
             },
-            label = { Text("Confirmar contraseña / Confirm password") },
+            label = { Text(stringResource(R.string.confirm_password_label)) },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = !isLoading
+            enabled = !isLoading,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            )
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -127,7 +152,7 @@ fun RegisterScreen(
         successMessage?.let { message ->
             Text(
                 text = message,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.secondary,
                 style = MaterialTheme.typography.bodyMedium
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -136,55 +161,40 @@ fun RegisterScreen(
         Button(
             onClick = {
                 errorMessage = when {
-                    name.isBlank() ||
-                            email.isBlank() ||
-                            password.isBlank() ||
-                            confirmPassword.isBlank() ->
-                        "Completa todos los campos / Complete all fields"
+                    name.isBlank() || email.isBlank() ||
+                            password.isBlank() || confirmPassword.isBlank() ->
+                        context.getString(R.string.error_empty_fields)
 
                     !android.util.Patterns.EMAIL_ADDRESS
                         .matcher(email.trim())
                         .matches() ->
-                        "Ingresa un correo válido / Enter a valid email"
+                        context.getString(R.string.error_invalid_email)
 
                     password.length < 8 ->
-                        "La contraseña debe tener al menos 8 caracteres / Password must be at least 8 characters"
+                        context.getString(R.string.error_password_length)
 
                     password != confirmPassword ->
-                        "Las contraseñas no coinciden / Passwords do not match"
+                        context.getString(R.string.error_passwords_mismatch)
 
                     else -> null
                 }
-
                 successMessage = null
 
                 if (errorMessage == null) {
                     scope.launch {
                         isLoading = true
-
                         try {
-                            val formEmail = email.trim()
-                            val formPassword = password
-
                             SupabaseConfig.client.auth.signUpWith(
                                 provider = Email,
                                 redirectUrl = "wanderai://auth"
                             ) {
-                                this.email = formEmail
-                                this.password = formPassword
+                                this.email = email.trim()
+                                this.password = password
                             }
-
-                            successMessage =
-                                "Registro enviado. Revisa tu correo para confirmar la cuenta. / Registration submitted. Check your email to confirm your account."
+                            successMessage = context.getString(R.string.register_success)
                         } catch (e: Exception) {
-                            android.util.Log.e(
-                                "WanderAIAuth",
-                                "Error al registrar usuario",
-                                e
-                            )
-
-                            errorMessage =
-                                "No se pudo crear la cuenta. Revisa Logcat para conocer el error. / Registration failed. Check Logcat for details."
+                            android.util.Log.e("WanderAIAuth", "Register error", e)
+                            errorMessage = context.getString(R.string.error_register_failed)
                         } finally {
                             isLoading = false
                         }
@@ -197,7 +207,7 @@ fun RegisterScreen(
             if (isLoading) {
                 CircularProgressIndicator()
             } else {
-                Text("Crear cuenta / Create account")
+                Text(stringResource(R.string.register_submit))
             }
         }
 
@@ -205,7 +215,7 @@ fun RegisterScreen(
             onClick = onBackClick,
             enabled = !isLoading
         ) {
-            Text("Volver / Back")
+            Text(stringResource(R.string.back_button))
         }
     }
 }
