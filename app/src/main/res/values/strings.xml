@@ -1,117 +1,233 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Español (idioma base). Mantener en paralelo con values-en/strings.xml -->
 <resources>
-    <!-- App -->
-    <string name="app_name">WanderAI</string>
+    <string name="app_name" translatable="false">WanderAI</string>
 
-    <!-- Welcome -->
-    <string name="welcome_title">WanderAI</string>
-    <string name="welcome_subtitle">Tu próxima aventura comienza aquí.</string>
-    <string name="welcome_description">Descubre lugares, explora nuevas rutas y viaja a tu manera.</string>
-    <string name="get_started">Comenzar</string>
+    <!-- Común -->
+    <string name="common_back">Volver</string>
+    <string name="common_cancel">Cancelar</string>
+    <string name="common_close">Cerrar</string>
+    <string name="common_delete">Eliminar</string>
+    <string name="common_save">Guardar</string>
+    <string name="common_free">Gratis</string>
+    <string name="common_walk_minutes">%1$d min a pie</string>
+    <string name="option_system">Sistema</string>
+    <string name="gps_live">GPS en vivo</string>
+    <string name="gps_reference">Referencia: Pasto</string>
 
-    <!-- Bottom navigation tabs -->
-    <string name="tab_home">Inicio</string>
+    <!-- Navegación -->
+    <string name="tab_plan">Generar</string>
     <string name="tab_explore">Explorar</string>
-    <string name="tab_scanner">Escáner</string>
-    <string name="tab_profile">Perfil</string>
+    <string name="tab_vision">Vision</string>
+    <string name="tab_vibra">Vibra</string>
+    <string name="tab_profile">Logros</string>
 
-    <!-- Home – AI Generator -->
-    <string name="home_greeting">¡Hola, explorador!</string>
-    <string name="home_subtitle">Genera tu itinerario con IA</string>
-    <string name="time_available">Tiempo disponible</string>
-    <string name="budget_label">Presupuesto</string>
-    <string name="max_distance">Distancia máxima</string>
-    <string name="place_type_label">Tipo de lugar</string>
-    <string name="place_restaurant">Restaurante</string>
-    <string name="place_park">Parque</string>
-    <string name="place_museum">Museo</string>
-    <string name="place_tour">Tour</string>
-    <string name="generate_itinerary">Generar Itinerario</string>
-    <string name="select_at_least_one">Selecciona al menos un tipo de lugar</string>
-
-    <!-- Explore -->
-    <string name="explore_title">Explora Pasto</string>
-    <string name="explore_coming_soon">Mapa interactivo próximamente</string>
-    <string name="explore_description">Visualiza destinos en tiempo real con rutas y marcadores de IA.</string>
-
-    <!-- Scanner -->
-    <string name="scanner_title">WanderAI Vision</string>
-    <string name="scanner_instruction">Apunta hacia un lugar histórico o turístico</string>
-    <string name="scanner_hint">La IA identificará el lugar y te mostrará su historia.</string>
-    <string name="scanner_coming_soon">Función de visión IA próximamente</string>
-
-    <!-- Profile -->
-    <string name="profile_title">Mi Perfil</string>
-    <string name="profile_total_logros">Logros totales</string>
-    <string name="profile_places">Lugares</string>
-    <string name="profile_exploration_time">Tiempo explorado</string>
-    <string name="profile_distance">Distancia</string>
-    <string name="profile_saved_itineraries">Itinerarios guardados</string>
-    <string name="profile_weekly">Semanal</string>
-    <string name="profile_no_itineraries">Aún no tienes itinerarios guardados.</string>
-
-    <!-- Settings -->
-    <string name="settings_button">Ajustes</string>
-    <string name="settings_title">Ajustes</string>
-    <string name="settings_description">Personaliza tu experiencia en WanderAI.</string>
-    <string name="appearance_title">Apariencia</string>
-    <string name="system_default">Predeterminado del sistema</string>
-    <string name="light_theme">Claro</string>
-    <string name="dark_theme">Oscuro</string>
-    <string name="language_title">Idioma</string>
-    <string name="system_language">Idioma del sistema</string>
-    <string name="spanish_language">Español</string>
-    <string name="english_language">Inglés</string>
-    <string name="back_button">Volver</string>
-    <string name="logout_button">Cerrar sesión</string>
-    <string name="settings_account">Cuenta</string>
-
-    <!-- Auth – Login -->
-    <string name="login_button">Iniciar sesión</string>
+    <!-- Autenticación -->
+    <string name="auth_tagline">Tu guía inteligente por Pasto</string>
     <string name="login_title">Bienvenido de nuevo</string>
+    <string name="login_subtitle">Inicia sesión para continuar tu aventura.</string>
+    <string name="login_submit">Iniciar sesión</string>
+    <string name="login_no_account">¿No tienes cuenta?</string>
+    <string name="login_go_register">Regístrate</string>
+    <string name="register_title">Crea tu cuenta</string>
+    <string name="register_subtitle">Guarda itinerarios, logros y sincroniza tu Vibra.</string>
+    <string name="register_submit">Crear cuenta</string>
+    <string name="register_have_account">¿Ya tienes cuenta?</string>
+    <string name="register_go_login">Inicia sesión</string>
+    <string name="register_success_title">Revisa tu correo</string>
+    <string name="register_success">Enviamos un enlace de confirmación a %1$s. Ábrelo desde este teléfono para activar tu cuenta.</string>
+    <string name="name_label">Nombre completo</string>
     <string name="email_label">Correo electrónico</string>
     <string name="password_label">Contraseña</string>
-    <string name="login_submit">Iniciar sesión</string>
-
-    <!-- Auth – Register -->
-    <string name="register_button">Crear cuenta</string>
-    <string name="register_title">Crear tu cuenta</string>
-    <string name="name_label">Nombre</string>
+    <string name="password_hint">Mínimo 8 caracteres</string>
     <string name="confirm_password_label">Confirmar contraseña</string>
-    <string name="register_submit">Crear cuenta</string>
-    <string name="register_success">¡Registro enviado! Revisa tu correo para confirmar la cuenta.</string>
+    <string name="password_show">Mostrar contraseña</string>
+    <string name="password_hide">Ocultar contraseña</string>
 
-    <!-- Vibra Watch Integration -->
-    <string name="vibra_title">Vibra Watch</string>
-    <string name="vibra_subtitle">Conecta tu reloj inteligente</string>
-    <string name="vibra_description">WanderAI envía instrucciones de navegación a tu Vibra para guiarte mediante retroalimentación háptica.</string>
-    <string name="vibra_connect">Buscar dispositivos</string>
-    <string name="vibra_disconnect">Desconectar</string>
-    <string name="vibra_scanning">Buscando dispositivos Vibra…</string>
+    <!-- Errores de validación -->
+    <string name="error_empty_fields">Completa todos los campos</string>
+    <string name="error_invalid_email">Ingresa un correo electrónico válido</string>
+    <string name="error_login_failed">Credenciales incorrectas o cuenta sin confirmar. Inténtalo de nuevo.</string>
+    <string name="error_password_length">La contraseña debe tener al menos 8 caracteres</string>
+    <string name="error_passwords_mismatch">Las contraseñas no coinciden</string>
+    <string name="error_register_failed">No se pudo crear la cuenta. Inténtalo de nuevo.</string>
+
+    <!-- Recomendaciones IA -->
+    <string name="reco_title">Recomendaciones IA</string>
+    <string name="reco_subtitle">Ajusta tus filtros y genera tu ruta ideal.</string>
+    <string name="reco_time">Tiempo disponible</string>
+    <string name="reco_budget">Presupuesto</string>
+    <string name="reco_distance">Distancia máxima</string>
+    <string name="reco_place_type">Tipo de lugar</string>
+    <string name="reco_generate">Generar itinerario</string>
+    <string name="reco_select_category">Selecciona al menos un tipo de lugar.</string>
+    <string name="reco_no_matches">No encontramos lugares con esos filtros. Prueba con más tiempo, presupuesto o distancia.</string>
+    <string name="reco_result_title">ITINERARIO GENERADO</string>
+    <string name="reco_save">Guardar</string>
+    <string name="reco_saved">Guardado</string>
+    <string name="reco_show_map">Ver en mapa</string>
+
+    <!-- Categorías -->
+    <string name="category_restaurant">Restaurante</string>
+    <string name="category_park">Parque</string>
+    <string name="category_museum">Museo</string>
+    <string name="category_viewpoint">Mirador</string>
+    <string name="category_heritage">Patrimonio</string>
+    <string name="itinerary_title_culture">Cultura e Historia</string>
+    <string name="itinerary_title_food">Sabores de Nariño</string>
+    <string name="itinerary_title_nature">Naturaleza y Café</string>
+    <string name="itinerary_title_views">Miradores de Pasto</string>
+
+    <!-- Explorar -->
+    <string name="explore_title">Explora Pasto</string>
+    <string name="explore_ai_pins">Pines recomendados IA</string>
+    <string name="explore_my_location">Mi ubicación</string>
+    <string name="explore_zoom_in">Acercar</string>
+    <string name="explore_zoom_out">Alejar</string>
+    <string name="explore_clear_route">Quitar ruta</string>
+    <string name="explore_map_description">Mapa interactivo del centro de Pasto. Pellizca para hacer zoom y arrastra para moverte.</string>
+
+    <!-- Watch Sync -->
+    <string name="sync_title">WATCH SYNC STATUS</string>
+    <string name="sync_route_label">WanderAI → Vibra</string>
+    <string name="sync_pill_synced">Sincronizado</string>
+    <string name="sync_pill_sending">Enviando</string>
+    <string name="sync_pill_connected">Conectado</string>
+    <string name="sync_pill_offline">Sin reloj</string>
+    <string name="sync_msg_no_itinerary">Genera un itinerario para enviarlo a tu reloj Vibra.</string>
+    <string name="sync_msg_disconnected">Tu Vibra no está conectado. Conéctalo para recibir la guía háptica.</string>
+    <string name="sync_msg_sending">Enviando instrucciones al reloj…</string>
+    <plurals name="sync_msg_ready">
+        <item quantity="one">Listo para sincronizar %1$d parada con tu Vibra.</item>
+        <item quantity="other">Listo para sincronizar %1$d paradas con tu Vibra.</item>
+    </plurals>
+    <string name="sync_msg_synced">Itinerario sincronizado (%1$d min a pie hasta %2$s)</string>
+    <string name="sync_action_generate">Generar itinerario</string>
+    <string name="sync_action_connect">Conectar Vibra</string>
+    <string name="sync_action_sync">Sincronizar con Vibra</string>
+    <string name="sync_action_resend">Reenviar al reloj</string>
+
+    <!-- Vision -->
+    <string name="vision_title">WanderAI Vision</string>
+    <string name="vision_subtitle">Apunta a un monumento</string>
+    <string name="vision_flash">Linterna</string>
+    <string name="vision_detected">WanderAI Vision: %1$s detectado (%2$d%%)</string>
+    <string name="vision_analyzing">Analizando entorno…</string>
+    <string name="vision_no_landmark">Sin monumentos cerca. Acércate al centro histórico.</string>
+    <string name="vision_current_location">Ubicación actual</string>
+    <string name="vision_city">Pasto, Nariño</string>
+    <string name="vision_history">Historia</string>
+    <string name="vision_open_map">Ver en el mapa</string>
+    <string name="vision_camera_permission">WanderAI Vision necesita la cámara para analizar monumentos.</string>
+    <string name="vision_camera_grant">Permitir cámara</string>
+    <string name="vision_camera_unavailable">No se pudo abrir la cámara en este dispositivo.</string>
+
+    <!-- Vibra -->
+    <string name="vibra_title">Vibra</string>
+    <string name="vibra_hero_label">SMARTWATCH HÁPTICO</string>
+    <string name="vibra_device_generic">Vibra Watch</string>
+    <string name="vibra_connected">Conectado</string>
     <string name="vibra_connecting">Conectando…</string>
-    <string name="vibra_connected">Vibra conectado</string>
-    <string name="vibra_disconnected">Sin dispositivo conectado</string>
+    <string name="vibra_scanning">Buscando dispositivos…</string>
+    <string name="vibra_disconnected">Desconectado</string>
+    <string name="vibra_status_error">Error de conexión</string>
+    <string name="vibra_ble">Bluetooth LE</string>
+    <string name="vibra_simulated">Simulador en el teléfono</string>
+    <string name="vibra_scan">Buscar mi Vibra</string>
+    <string name="vibra_stop_scan">Detener búsqueda</string>
+    <string name="vibra_use_simulator">Probar con el simulador háptico</string>
+    <string name="vibra_connect">Conectar</string>
+    <string name="vibra_disconnect">Desconectar</string>
+    <string name="vibra_devices_found">Dispositivos encontrados</string>
+    <string name="vibra_nav_title">Navegación háptica</string>
+    <string name="vibra_no_route">No hay ruta activa. Genera un itinerario para guiarte con vibraciones.</string>
+    <string name="vibra_route_summary">%1$s · %2$s · %3$s</string>
+    <string name="vibra_send_route">Enviar itinerario al reloj</string>
     <string name="vibra_haptic_intensity">Intensidad háptica</string>
     <string name="vibra_haptic_soft">Suave</string>
     <string name="vibra_haptic_medium">Media</string>
     <string name="vibra_haptic_strong">Fuerte</string>
-    <string name="vibra_sync_status">Watch Sync Status</string>
-    <string name="vibra_next_point">Próximo punto</string>
-    <string name="vibra_synced">Sincronizado</string>
-    <string name="vibra_guide_active">Guía háptica activa</string>
-    <string name="vibra_no_route">Sin ruta activa — genera un itinerario primero</string>
-    <string name="vibra_arrow_instruction">Gira a la derecha en 70 m</string>
-    <string name="vibra_distance_label">Distancia al próximo punto</string>
-    <string name="vibra_device_name">Vibra Gen 2</string>
-    <string name="vibra_battery">Batería: 84%%</string>
-    <string name="explore_watch_sync">Watch Sync</string>
-    <string name="explore_connect_vibra">Conectar Vibra</string>
+    <string name="vibra_test_title">Probar instrucciones</string>
+    <string name="vibra_test_left">Izquierda</string>
+    <string name="vibra_test_straight">Recto</string>
+    <string name="vibra_test_right">Derecha</string>
+    <string name="vibra_test_arrived">Llegada</string>
+    <string name="vibra_last_command">Último envío: %1$s</string>
+    <string name="vibra_how_title">¿Cómo funciona?</string>
+    <string name="vibra_description">WanderAI envía cada instrucción de tu ruta al reloj por Bluetooth Low Energy. Vibra la traduce en un patrón de vibración para que camines sin mirar el teléfono.</string>
+    <string name="vibra_pattern_left">2 pulsos cortos — gira a la izquierda</string>
+    <string name="vibra_pattern_right">3 pulsos cortos — gira a la derecha</string>
+    <string name="vibra_pattern_straight">1 pulso largo — sigue recto</string>
+    <string name="vibra_pattern_arrived">Ráfaga + pulso largo — llegaste</string>
+    <string name="vibra_error_unavailable">Este dispositivo no tiene Bluetooth LE disponible.</string>
+    <string name="vibra_error_disabled">Activa el Bluetooth para buscar tu Vibra.</string>
+    <string name="vibra_error_permission">Concede el permiso de dispositivos cercanos para conectar tu Vibra.</string>
+    <string name="vibra_error_no_devices">No encontramos ningún Vibra. Verifica que esté encendido y cerca.</string>
+    <string name="vibra_error_connection_lost">Se perdió la conexión con el reloj.</string>
+    <string name="vibra_error_protocol">El dispositivo no expone el servicio háptico de Vibra.</string>
+    <string name="vibra_error_write">No se pudo enviar la instrucción al reloj.</string>
+    <string name="vibra_error_not_connected">Conecta tu Vibra antes de sincronizar.</string>
+    <string name="haptic_turn_left">Gira a la izquierda en %1$s</string>
+    <string name="haptic_turn_right">Gira a la derecha en %1$s</string>
+    <string name="haptic_straight">Sigue recto %1$s</string>
+    <string name="haptic_arrived">Has llegado a tu destino</string>
+    <plurals name="haptic_sync">
+        <item quantity="one">Itinerario de %1$d parada</item>
+        <item quantity="other">Itinerario de %1$d paradas</item>
+    </plurals>
+    <string name="haptic_ping">Señal de prueba</string>
 
-    <!-- Validation errors -->
-    <string name="error_empty_fields">Completa todos los campos</string>
-    <string name="error_invalid_email">Ingresa un correo electrónico válido</string>
-    <string name="error_login_failed">Credenciales incorrectas. Inténtalo de nuevo.</string>
-    <string name="error_password_length">La contraseña debe tener al menos 8 caracteres</string>
-    <string name="error_passwords_mismatch">Las contraseñas no coinciden</string>
-    <string name="error_register_failed">No se pudo crear la cuenta. Inténtalo de nuevo.</string>
+    <!-- Perfil y logros -->
+    <string name="profile_city">Pasto, Colombia</string>
+    <string name="profile_total_achievements">Logros totales</string>
+    <string name="profile_trips">Viajes</string>
+    <string name="profile_places">Lugares</string>
+    <string name="profile_badges">Insignias</string>
+    <string name="profile_exploration_time">Tiempo de exploración</string>
+    <string name="profile_weekly">Semanal</string>
+    <string name="profile_total_week">%1$s esta semana</string>
+    <string name="profile_distance">Distancia</string>
+    <string name="profile_distance_total">%1$s km en las últimas 6 semanas</string>
+    <string name="profile_saved_itineraries">Itinerarios guardados</string>
+    <string name="profile_no_itineraries">Aún no tienes itinerarios guardados. Genera uno y pulsa Guardar.</string>
+    <plurals name="profile_stops">
+        <item quantity="one">%1$d parada</item>
+        <item quantity="other">%1$d paradas</item>
+    </plurals>
+    <string name="profile_report">Reporte</string>
+    <string name="profile_edit">Editar</string>
+    <string name="profile_edit_title">Editar perfil</string>
+    <string name="profile_edit_failed">No se pudo actualizar el nombre.</string>
+    <string name="profile_report_text">Mi resumen WanderAI — %1$s\n• Viajes: %2$d\n• Lugares visitados: %3$d\n• Km caminados (6 semanas): %4$s\n• Itinerarios guardados: %5$d\n#WanderAI #Pasto</string>
+    <string name="achievement_first_route">Primera ruta</string>
+    <string name="achievement_colonial">Explorador colonial</string>
+    <string name="achievement_walker">Caminante 50 km</string>
+    <string name="achievement_viewpoints">Cazamiradores</string>
+    <string name="achievement_foodie">Sibarita nariñense</string>
+    <string name="chart_exploration_a11y">Minutos de exploración por día</string>
+    <string name="chart_distance_a11y">Kilómetros por semana</string>
+    <string name="chart_week_prefix">S</string>
+    <string-array name="weekdays_short">
+        <item>L</item>
+        <item>M</item>
+        <item>X</item>
+        <item>J</item>
+        <item>V</item>
+        <item>S</item>
+        <item>D</item>
+    </string-array>
+
+    <!-- Ajustes -->
+    <string name="settings_title">Ajustes</string>
+    <string name="settings_description">Personaliza tu experiencia en WanderAI.</string>
+    <string name="appearance_title">Apariencia</string>
+    <string name="light_theme">Claro</string>
+    <string name="dark_theme">Oscuro</string>
+    <string name="language_title">Idioma</string>
+    <string name="spanish_language">Español</string>
+    <string name="english_language">English</string>
+    <string name="language_hint">El cambio se aplica al instante y también aparece en los ajustes de idioma de Android.</string>
+    <string name="settings_account">Cuenta</string>
+    <string name="logout_button">Cerrar sesión</string>
+    <string name="settings_version">WanderAI v%1$s</string>
 </resources>
