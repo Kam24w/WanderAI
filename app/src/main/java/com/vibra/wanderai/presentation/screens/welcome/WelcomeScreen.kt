@@ -1,7 +1,6 @@
 package com.vibra.wanderai.presentation.screens.welcome
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -34,8 +32,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vibra.wanderai.R
+import com.vibra.wanderai.presentation.components.WanderLogo
 import com.vibra.wanderai.ui.theme.DarkBackground
-import com.vibra.wanderai.ui.theme.GoldAccent
 import com.vibra.wanderai.ui.theme.NavyDeep
 import com.vibra.wanderai.ui.theme.TealBrand
 import com.vibra.wanderai.ui.theme.TealLight
@@ -71,21 +69,7 @@ fun WelcomeScreen(
             Spacer(Modifier.weight(1f))
 
             // ── Logo ─────────────────────────────────────────────────────────
-            Box(
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.08f))
-                    .border(2.dp, Color.White.copy(alpha = 0.18f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "W",
-                    color = GoldAccent,
-                    fontSize = 50.sp,
-                    fontWeight = FontWeight.Black
-                )
-            }
+            WanderLogo(size = 104.dp, padding = 8.dp)
 
             Spacer(Modifier.height(20.dp))
 
