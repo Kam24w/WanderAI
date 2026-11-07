@@ -111,7 +111,7 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(12.dp))
 
-            WanderLogo(size = 64.dp, padding = 6.dp)
+            WanderLogo(size = 64.dp, padding = 6.dp, onDark = true)
 
             Spacer(Modifier.height(10.dp))
 

@@ -69,7 +69,7 @@ fun WelcomeScreen(
             Spacer(Modifier.weight(1f))
 
             // ── Logo ─────────────────────────────────────────────────────────
-            WanderLogo(size = 104.dp, padding = 8.dp)
+            WanderLogo(size = 104.dp, padding = 8.dp, onDark = true)
 
             Spacer(Modifier.height(20.dp))
 

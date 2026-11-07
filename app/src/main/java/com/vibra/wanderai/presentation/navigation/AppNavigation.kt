@@ -128,7 +128,7 @@ fun AppNavigation(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                WanderLogo(size = 80.dp, padding = 7.dp)
+                WanderLogo(size = 80.dp, padding = 7.dp, onDark = true)
                 Spacer(Modifier.height(24.dp))
                 CircularProgressIndicator(color = TealBrand, strokeWidth = 3.dp)
             }
