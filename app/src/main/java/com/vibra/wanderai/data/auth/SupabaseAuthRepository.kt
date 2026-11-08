@@ -2,6 +2,7 @@ package com.vibra.wanderai.data.auth
 
 import android.util.Log
 import com.vibra.wanderai.core.network.SupabaseConfig
+import com.vibra.wanderai.data.supabase.SupabaseTables
 import com.vibra.wanderai.domain.model.AuthState
 import com.vibra.wanderai.domain.model.AuthUser
 import com.vibra.wanderai.domain.model.SignUpResult
@@ -11,6 +12,7 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.auth.user.UserInfo
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -73,6 +75,14 @@ class SupabaseAuthRepository(
 
     override suspend fun signOut() {
         runAuth("signOut") { client.auth.signOut() }
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> = runAuth("deleteAccount") {
+        // Borra auth.users del llamante; profiles, user_achievements y saved_itineraries
+        // caen por ON DELETE CASCADE (ver supabase/migrations).
+        client.postgrest.rpc(SupabaseTables.RPC_DELETE_ACCOUNT)
+        // El usuario ya no existe en el servidor: solo queda descartar la sesión local.
+        client.auth.clearSession()
     }
 
     private suspend inline fun <T> runAuth(operation: String, block: () -> T): Result<T> =
