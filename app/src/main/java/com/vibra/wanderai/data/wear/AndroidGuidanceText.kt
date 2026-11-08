@@ -64,6 +64,8 @@ class PhoneGuidanceAnnouncer(context: Context) : GuidanceAnnouncer, TextToSpeech
 
     override fun guidanceResumed() = toast(R.string.wear_guidance_resumed)
 
+    override fun navigationStopped() = toast(R.string.wear_navigation_stopped)
+
     private fun speak(text: String) {
         val engine = tts ?: TextToSpeech(appContext, this).also { tts = it }
         if (!ttsReady) {
