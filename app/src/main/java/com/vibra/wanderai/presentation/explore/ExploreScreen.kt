@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.Navigation
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.WrongLocation
 import androidx.compose.material.icons.outlined.Sync
@@ -56,6 +57,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -92,7 +96,7 @@ fun ExploreScreen(
         ExploreViewModel(
             it.placesRepository, it.itineraryRepository, it.vibraRepository,
             it.syncItineraryToWatch, it.wearDataLayerRepository, it.observeTravelerLocation, it.planSession,
-            it.routesRepository,
+            it.routesRepository, it.startNavigationToPlace,
         )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -125,6 +129,15 @@ fun ExploreScreen(
     // Real streets from the Routes API (straight segments while loading or if it fails).
     val route = state.routePath.points
 
+    // After "Fijar rumbo": frame the whole path once the street route is drawn.
+    LaunchedEffect(state.pendingRouteFit, state.routePath) {
+        val course = state.course as? CourseState.Started ?: return@LaunchedEffect
+        if (!state.pendingRouteFit || route.size < 2) return@LaunchedEffect
+        if (course.followsStreets && !state.routePath.followsStreets) return@LaunchedEffect
+        viewModel.onRouteFitted()
+        mapController.showPath(route)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -150,7 +163,7 @@ fun ExploreScreen(
         )
 
         Box(Modifier.fillMaxSize()) {
-            val highlighted = if (state.activeItinerary != null) state.recommendedIds else emptySet()
+            val highlighted = state.routePlaceIds
             if (useGoogleMap) {
                 WanderGoogleMap(
                     controller = googleMap,
@@ -214,7 +227,7 @@ fun ExploreScreen(
                     container = MaterialTheme.colorScheme.surface,
                 )
                 FilterChip(
-                    selected = state.showOnlyRecommended,
+                    selected = state.showRecommended,
                     onClick = viewModel::toggleRecommended,
                     label = { Text(stringResource(R.string.explore_ai_pins), fontWeight = FontWeight.SemiBold) },
                     leadingIcon = { Icon(Icons.Outlined.AutoAwesome, null, Modifier.size(18.dp)) },
@@ -244,6 +257,9 @@ fun ExploreScreen(
                         PlaceDetailCard(
                             place = place,
                             distanceMeters = state.location.point.distanceTo(place.location).roundToInt(),
+                            course = state.course.takeIf { it.placeId() == place.id } ?: CourseState.Idle,
+                            isActiveCourse = state.isCourseTo(place.id),
+                            onSetCourse = { viewModel.setCourse(place) },
                             onClose = { viewModel.selectPlace(null) },
                         )
                     }
@@ -270,8 +286,21 @@ private fun MapFab(icon: ImageVector, description: String, onClick: () -> Unit) 
     }
 }
 
+private fun CourseState.placeId(): String? = when (this) {
+    CourseState.Idle -> null
+    is CourseState.Starting -> placeId
+    is CourseState.Started -> placeId
+}
+
 @Composable
-private fun PlaceDetailCard(place: Place, distanceMeters: Int, onClose: () -> Unit) {
+private fun PlaceDetailCard(
+    place: Place,
+    distanceMeters: Int,
+    course: CourseState,
+    isActiveCourse: Boolean,
+    onSetCourse: () -> Unit,
+    onClose: () -> Unit,
+) {
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -299,10 +328,57 @@ private fun PlaceDetailCard(place: Place, distanceMeters: Int, onClose: () -> Un
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(place.summary.localized(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(10.dp))
+                CourseAction(course = course, isActiveCourse = isActiveCourse, onSetCourse = onSetCourse)
             }
             IconButton(onClick = onClose, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.common_close), modifier = Modifier.size(18.dp))
             }
+        }
+    }
+}
+
+/** "Fijar rumbo" button, or what happened after pressing it. */
+@Composable
+private fun CourseAction(course: CourseState, isActiveCourse: Boolean, onSetCourse: () -> Unit) {
+    val started = course as? CourseState.Started
+    if (isActiveCourse && started != null) {
+        val message = when {
+            !started.followsStreets -> R.string.explore_course_straight
+            started.watchSynced -> R.string.explore_course_synced
+            else -> R.string.explore_course_no_watch
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        ) {
+            Icon(
+                Icons.Outlined.Navigation,
+                contentDescription = null,
+                tint = if (started.watchSynced) WanderTheme.colors.success else WanderTheme.colors.brandGold,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(message), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+        }
+        return
+    }
+    val starting = course is CourseState.Starting
+    Button(
+        onClick = onSetCourse,
+        enabled = !starting,
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = WanderTheme.colors.brandTeal, contentColor = Color.White),
+        modifier = Modifier.height(40.dp),
+    ) {
+        if (starting) {
+            CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.explore_course_starting), fontWeight = FontWeight.Bold)
+        } else {
+            Icon(Icons.Outlined.Navigation, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(stringResource(if (isActiveCourse) R.string.explore_course_resend else R.string.explore_set_course), fontWeight = FontWeight.Bold)
         }
     }
 }
