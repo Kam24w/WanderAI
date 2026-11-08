@@ -2,8 +2,6 @@ package com.vibra.wanderai.data.wear
 
 import android.content.Context
 import android.util.Log
-import com.google.android.gms.wearable.MessageClient
-import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.vibra.wanderai.domain.model.ActiveRouteState
@@ -32,9 +30,11 @@ import kotlinx.coroutines.tasks.await
 /**
  * [WearDataLayerRepository] backed by Google Play services Wearable (see [WearProtocol]).
  *
- * The message listener lives as long as the app process, so watch actions are
- * handled while the app is open or running in the background. Every call fails
- * gracefully (logged, [Result.failure]) on phones without the Wear OS companion.
+ * Watch actions arrive through [WatchActionListenerService], which the system
+ * starts even when WanderAI is closed, and are forwarded to [onWatchMessage].
+ * (No runtime MessageClient listener: it would deliver every action twice while
+ * the app is open.) Every call fails gracefully (logged, [Result.failure]) on
+ * phones without the Wear OS companion.
  *
  * [devBridge] is only non-null in debug builds (see
  * [com.vibra.wanderai.core.DevEnvironment]): when Play services reports no nodes or
@@ -58,15 +58,10 @@ class WearableDataLayerRepository(
     private val _userActions = MutableSharedFlow<WatchUserAction>(extraBufferCapacity = 16)
     override val userActions: Flow<WatchUserAction> = _userActions.asSharedFlow()
 
-    private val messageListener = MessageClient.OnMessageReceivedListener(::onMessageReceived)
-
     init {
-        messageClient.addListener(messageListener)
-            .addOnFailureListener { Log.w(TAG, "Wear OS Data Layer unavailable", it) }
-
         devBridge?.let { bridge ->
             bridge.start(scope)
-            scope.launch { bridge.incoming.collect { onFrame(it.path, it.data) } }
+            scope.launch { bridge.incoming.collect { onWatchMessage(it.path, it.data) } }
             scope.launch { bridge.connected.collect { refreshConnectedWatches() } }
         }
 
@@ -84,9 +79,7 @@ class WearableDataLayerRepository(
         }
     }
 
-    private fun onMessageReceived(event: MessageEvent) = onFrame(event.path, event.data)
-
-    private fun onFrame(path: String, data: ByteArray) {
+    override fun onWatchMessage(path: String, data: ByteArray) {
         if (path != WearProtocol.PATH_USER_ACTION) return
         val action = WearProtocol.decodeUserAction(data)
         if (action == null) {
