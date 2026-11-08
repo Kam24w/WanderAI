@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
  * Application-scoped coordinator of the Wear OS guidance session:
  *  - turns cues into [NavigationEvent]s for `/wanderai/navigation_event`,
  *  - mirrors the active itinerary to the `/wanderai/active_route` DataItem,
- *  - reacts to ACK / REPEAT / PAUSE / RESUME sent from the watch.
+ *  - reacts to ACK / REPEAT / PAUSE / RESUME / STOP sent from the watch.
  *
  * While paused, cues are remembered but not sent (except [NavigationAction.ALERT]);
  * the latest one is re-sent on resume.
@@ -41,6 +41,8 @@ class NavigationGuidanceController(
     private val text: GuidanceTextProvider,
     private val announcer: GuidanceAnnouncer,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Cancels the active route on the phone (clears the itinerary and the map). */
+    private val stopRoute: () -> Unit = {},
 ) {
     private val _state = MutableStateFlow(GuidanceState())
     val state: StateFlow<GuidanceState> = _state.asStateFlow()
@@ -102,6 +104,13 @@ class NavigationGuidanceController(
                 val resumed = _state.updateAndGet { it.copy(paused = false) }
                 announcer.guidanceResumed()
                 resumed.lastEvent?.let { wear.sendNavigationEvent(it.copy(timestampMillis = clock())) }
+            }
+
+            // Clearing the itinerary also writes an inactive route DataItem for the watch.
+            WatchUserAction.STOP_NAVIGATION -> {
+                _state.value = GuidanceState()
+                stopRoute()
+                announcer.navigationStopped()
             }
         }
     }
