@@ -236,4 +236,39 @@
     <string name="settings_account">Account</string>
     <string name="logout_button">Sign out</string>
     <string name="settings_version">WanderAI v%1$s</string>
+    <!-- Exact values (Plan) -->
+    <string name="reco_edit_budget_title">Exact budget</string>
+    <string name="reco_edit_distance_title">Exact distance</string>
+    <string name="reco_edit_range">Between %1$s and %2$s</string>
+    <string name="reco_edit_invalid">Enter a value between %1$s and %2$s.</string>
+    <string name="reco_edit_action">Type exact value</string>
+    <string name="reco_open_chat">AI travel chat</string>
+
+    <!-- AI travel chat (Groq) -->
+    <string name="chat_title">AI travel chat</string>
+    <string name="chat_subtitle">Recommendations based on your location and filters</string>
+    <string name="chat_input_hint">Ask your guide anything…</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_new">New conversation</string>
+    <string name="chat_welcome">Hi! I\'m your Pasto guide. Tell me what you feel like and I\'ll recommend places near you.</string>
+    <string name="chat_suggestion_dinner">Recommend a traditional place for dinner under 40k</string>
+    <string name="chat_suggestion_free">What can I visit for free near me?</string>
+    <string name="chat_suggestion_view">I want a viewpoint to watch the sunset</string>
+    <string name="chat_thinking">Thinking…</string>
+    <string name="chat_filters">Your filters: %1$s · %2$s · %3$s</string>
+    <string name="chat_show_on_map">Show on map</string>
+    <string name="chat_retry">Retry</string>
+    <string name="chat_error_missing_key">GROQ_API_KEY is missing from local.properties.</string>
+    <string name="chat_error_unauthorized">The Groq key is not valid.</string>
+    <string name="chat_error_rate_limited">Too many requests in a row. Wait a moment and try again.</string>
+    <string name="chat_error_network">Could not reach the AI. Check your connection.</string>
+    <string name="chat_error_invalid">The AI returned an answer I could not understand.</string>
+
+    <!-- Account (GDPR) -->
+    <string name="profile_delete_account">Delete account and data</string>
+    <string name="profile_delete_title">Delete your account?</string>
+    <string name="profile_delete_message">Your profile, achievements and saved itineraries will be permanently erased, on this device and in the cloud. This cannot be undone.</string>
+    <string name="profile_delete_confirm">Delete permanently</string>
+    <string name="profile_delete_failed">The account could not be deleted. Check your connection and try again.</string>
+    <string name="profile_achievement_unlocked">Unlocked</string>
 </resources>
