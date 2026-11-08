@@ -72,6 +72,9 @@ import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.Achievement
 import com.vibra.wanderai.domain.model.Itinerary
 import com.vibra.wanderai.domain.model.TravelerStats
+import com.vibra.wanderai.domain.usecase.CredentialValidator
+import com.vibra.wanderai.domain.usecase.NameIssue
+import com.vibra.wanderai.presentation.auth.messageRes
 import com.vibra.wanderai.presentation.common.color
 import com.vibra.wanderai.presentation.common.formatCopShort
 import com.vibra.wanderai.presentation.common.formatDuration
@@ -182,6 +185,8 @@ fun ProfileScreen(
             initial = state.user?.displayName.orEmpty(),
             isSaving = state.isSavingName,
             failed = state.nameUpdateFailed,
+            nameIssue = state.nameIssue,
+            onNameChanged = viewModel::clearNameError,
             onDismiss = {
                 editing = false
                 viewModel.clearNameError()
@@ -544,6 +549,8 @@ private fun EditNameDialog(
     initial: String,
     isSaving: Boolean,
     failed: Boolean,
+    nameIssue: NameIssue?,
+    onNameChanged: () -> Unit,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
 ) {
@@ -555,15 +562,22 @@ private fun EditNameDialog(
             Column {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it.take(CredentialValidator.NAME_MAX)
+                        onNameChanged()
+                    },
                     label = { Text(stringResource(R.string.name_label)) },
                     singleLine = true,
                     enabled = !isSaving,
-                    isError = failed,
-                    supportingText = if (failed) {
-                        { Text(stringResource(R.string.profile_edit_failed)) }
-                    } else {
-                        null
+                    isError = failed || nameIssue != null,
+                    supportingText = {
+                        Text(
+                            when {
+                                nameIssue != null -> stringResource(nameIssue.messageRes)
+                                failed -> stringResource(R.string.profile_edit_failed)
+                                else -> stringResource(R.string.name_counter, name.trim().length, CredentialValidator.NAME_MAX)
+                            },
+                        )
                     },
                 )
             }
