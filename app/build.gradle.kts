@@ -9,6 +9,7 @@ val localProperties = Properties().apply {
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -38,6 +39,24 @@ android {
             "SUPABASE_KEY",
             "\"${localProperties.getProperty("SUPABASE_KEY", "")}\""
         )
+
+        // Google Maps SDK: AndroidManifest lee ${MAPS_API_KEY} (meta-data com.google.android.geo.API_KEY).
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY", "")
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("boolean", "HAS_MAPS_API_KEY", mapsApiKey.isNotBlank().toString())
+
+        // Groq (chat de viaje con IA).
+        buildConfigField(
+            "String",
+            "GROQ_API_KEY",
+            "\"${localProperties.getProperty("GROQ_API_KEY", "")}\""
+        )
+        // Opcional: modelo de Groq (vacío = GroqProtocol.DEFAULT_MODEL).
+        buildConfigField(
+            "String",
+            "GROQ_MODEL",
+            "\"${localProperties.getProperty("GROQ_MODEL", "")}\""
+        )
     }
 
     buildTypes {
@@ -66,6 +85,7 @@ android {
 
 dependencies {
     implementation(libs.supabase.auth)
+    implementation(libs.supabase.postgrest)
     implementation(libs.supabase.ktor)
 
     implementation(libs.androidx.appcompat)
@@ -77,6 +97,10 @@ dependencies {
     // Wear OS Data Layer — Vibra watch app
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.play.services)
+
+    // Google Maps SDK (vista Explorar)
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
 
     // CameraX — WanderAI Vision viewfinder
     implementation(libs.androidx.camera.core)
