@@ -1,8 +1,11 @@
 package com.vibra.wanderai.domain.repository
 
+import com.vibra.wanderai.domain.model.AchievementType
 import com.vibra.wanderai.domain.model.ActiveRouteState
 import com.vibra.wanderai.domain.model.AppLanguage
 import com.vibra.wanderai.domain.model.AuthState
+import com.vibra.wanderai.domain.model.ChatMessage
+import com.vibra.wanderai.domain.model.ChatReply
 import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.HapticCommand
 import com.vibra.wanderai.domain.model.HapticEvent
@@ -13,6 +16,7 @@ import com.vibra.wanderai.domain.model.NavigationEvent
 import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.SignUpResult
 import com.vibra.wanderai.domain.model.ThemeMode
+import com.vibra.wanderai.domain.model.TravelChatContext
 import com.vibra.wanderai.domain.model.TravelerStats
 import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.model.VibraDevice
@@ -28,6 +32,12 @@ interface AuthRepository {
     suspend fun signUp(displayName: String, email: String, password: String): Result<SignUpResult>
     suspend fun updateDisplayName(displayName: String): Result<Unit>
     suspend fun signOut()
+
+    /**
+     * GDPR: deletes the Supabase user and, by cascade, every row that belongs to it
+     * (profile, achievements, saved itineraries), then ends the local session.
+     */
+    suspend fun deleteAccount(): Result<Unit>
 }
 
 interface SettingsRepository {
@@ -56,10 +66,37 @@ interface ItineraryRepository {
     fun setActive(itinerary: Itinerary?)
     suspend fun save(itinerary: Itinerary)
     suspend fun delete(itineraryId: String)
+
+    /** Merges the itineraries stored in the cloud for the signed-in user into the local copy. */
+    suspend fun refreshFromCloud()
+
+    /** Removes every itinerary stored on this device (after deleting the account). */
+    suspend fun clearLocal()
 }
 
 interface TravelerRepository {
     fun observeStats(): Flow<TravelerStats>
+}
+
+/** `profiles` table: one row per Supabase user. */
+interface ProfileRepository {
+    suspend fun upsertProfile(displayName: String): Result<Unit>
+}
+
+/** `achievements` catalogue + `user_achievements` (unlocks of the signed-in user). */
+interface AchievementsRepository {
+    val unlocked: StateFlow<Set<AchievementType>>
+    suspend fun refresh(): Result<Unit>
+
+    /** Records [types] as unlocked now; already unlocked ones are ignored. */
+    suspend fun unlock(types: Set<AchievementType>): Result<Unit>
+    fun clearLocal()
+}
+
+/** Conversational travel assistant (Groq) that recommends places from the catalogue. */
+interface TravelChatRepository {
+    /** [history] holds the previous messages, oldest first, without [message]. */
+    suspend fun reply(history: List<ChatMessage>, message: String, context: TravelChatContext): Result<ChatReply>
 }
 
 interface VibraRepository {
