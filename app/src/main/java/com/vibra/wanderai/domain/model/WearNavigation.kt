@@ -47,7 +47,7 @@ data class ActiveRouteState(
 }
 
 /** Actions the traveler triggers from the wrist (`/vibra/user_action`). */
-enum class WatchUserAction { ACK, REPEAT_INSTRUCTION, PAUSE_GUIDANCE, RESUME_GUIDANCE }
+enum class WatchUserAction { ACK, REPEAT_INSTRUCTION, PAUSE_GUIDANCE, RESUME_GUIDANCE, STOP_NAVIGATION }
 
 /** A Wear OS node currently reachable through the Data Layer. */
 data class WearWatch(val id: String, val displayName: String)
