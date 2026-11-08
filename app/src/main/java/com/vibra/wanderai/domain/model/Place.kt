@@ -27,6 +27,9 @@ enum class PlaceCategory {
     }
 }
 
+/** Where a place comes from: the curated Pasto catalogue or Google Places (Nearby Search). */
+enum class PlaceSource { CATALOGUE, GOOGLE }
+
 data class Place(
     val id: String,
     val name: String,
@@ -37,4 +40,7 @@ data class Place(
     val visitMinutes: Int,
     val summary: LocalizedText,
     val history: LocalizedText? = null,
+    val source: PlaceSource = PlaceSource.CATALOGUE,
+    /** Google places: [averageCostCop] is estimated from the price level, not measured. */
+    val isCostEstimated: Boolean = false,
 )
