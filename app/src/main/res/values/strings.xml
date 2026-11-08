@@ -39,16 +39,15 @@
     <string name="name_label">Nombre completo</string>
     <string name="email_label">Correo electrónico</string>
     <string name="password_label">Contraseña</string>
-    <string name="password_hint">Mínimo 8 caracteres</string>
+    <string name="password_hint">Mínimo 8 caracteres, con mayúscula, número y símbolo</string>
     <string name="confirm_password_label">Confirmar contraseña</string>
     <string name="password_show">Mostrar contraseña</string>
     <string name="password_hide">Ocultar contraseña</string>
 
     <!-- Errores de validación -->
     <string name="error_empty_fields">Completa todos los campos</string>
-    <string name="error_invalid_email">Ingresa un correo electrónico válido</string>
+    <string name="error_invalid_email">Escribe un correo válido, por ejemplo nombre@dominio.com</string>
     <string name="error_login_failed">Credenciales incorrectas o cuenta sin confirmar. Inténtalo de nuevo.</string>
-    <string name="error_password_length">La contraseña debe tener al menos 8 caracteres</string>
     <string name="error_passwords_mismatch">Las contraseñas no coinciden</string>
     <string name="error_register_failed">No se pudo crear la cuenta. Inténtalo de nuevo.</string>
 
@@ -273,4 +272,38 @@
     <string name="profile_delete_confirm">Eliminar definitivamente</string>
     <string name="profile_delete_failed">No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo.</string>
     <string name="profile_achievement_unlocked">Desbloqueado</string>
+    <!-- Validación de cuenta y perfil -->
+    <string name="error_fix_fields">Revisa los campos marcados en rojo.</string>
+    <string name="error_name_short">El nombre debe tener al menos 2 caracteres.</string>
+    <string name="error_name_long">El nombre no puede superar los 50 caracteres.</string>
+    <string name="error_name_chars">Usa solo letras, espacios, apóstrofos, puntos o guiones.</string>
+    <string name="name_counter">%1$d/%2$d</string>
+    <string name="password_rules_title">Tu contraseña necesita:</string>
+    <string name="password_rule_length">Entre 8 y 72 caracteres</string>
+    <string name="password_rule_upper">Al menos una letra mayúscula</string>
+    <string name="password_rule_digit">Al menos un número</string>
+    <string name="password_rule_special">Al menos un carácter especial (!@#$%…)</string>
+    <string name="password_rule_predictable">Sin secuencias, repeticiones ni claves comunes (1234, abcd, aaaa)</string>
+    <string name="password_rule_met">cumplido</string>
+    <string name="password_rule_pending">pendiente</string>
+
+    <!-- Historial del chat -->
+    <string name="chat_history_title">Historial de chats</string>
+    <string name="chat_history_empty">Aún no tienes conversaciones guardadas. Se guardan solas después de cada respuesta.</string>
+    <string name="chat_history_error">No se pudo cargar tu historial.</string>
+    <string name="chat_history_open">Retomar conversación</string>
+    <string name="chat_history_delete">Eliminar conversación</string>
+    <string name="chat_history_delete_title">¿Eliminar esta conversación?</string>
+    <string name="chat_history_delete_message">Se borrará de tu historial en todos tus dispositivos.</string>
+    <string name="chat_history_delete_all">Eliminar todo</string>
+    <string name="chat_history_delete_all_title">¿Eliminar todo el historial?</string>
+    <string name="chat_history_delete_all_message">Se borrarán todas tus conversaciones con la IA. Esta acción no se puede deshacer.</string>
+    <string name="chat_history_delete_failed">No se pudo eliminar. Revisa tu conexión.</string>
+    <string name="chat_history_save_failed">Esta conversación no se pudo guardar en tu historial.</string>
+    <plurals name="chat_history_messages">
+        <item quantity="one">%d mensaje</item>
+        <item quantity="other">%d mensajes</item>
+    </plurals>
+    <string name="chat_place_nearby">Cerca de ti</string>
+    <string name="chat_cost_estimated">aprox.</string>
 </resources>
