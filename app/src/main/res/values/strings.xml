@@ -238,4 +238,39 @@
     <string name="settings_account">Cuenta</string>
     <string name="logout_button">Cerrar sesión</string>
     <string name="settings_version">WanderAI v%1$s</string>
+    <!-- Valores exactos (Plan) -->
+    <string name="reco_edit_budget_title">Presupuesto exacto</string>
+    <string name="reco_edit_distance_title">Distancia exacta</string>
+    <string name="reco_edit_range">Entre %1$s y %2$s</string>
+    <string name="reco_edit_invalid">Escribe un valor entre %1$s y %2$s.</string>
+    <string name="reco_edit_action">Escribir valor exacto</string>
+    <string name="reco_open_chat">Chat de viaje con IA</string>
+
+    <!-- Chat de viaje IA (Groq) -->
+    <string name="chat_title">Chat de viaje IA</string>
+    <string name="chat_subtitle">Recomendaciones según tu ubicación y filtros</string>
+    <string name="chat_input_hint">Pregúntale algo a tu guía…</string>
+    <string name="chat_send">Enviar</string>
+    <string name="chat_new">Nueva conversación</string>
+    <string name="chat_welcome">¡Hola! Soy tu guía de Pasto. Cuéntame qué te provoca y te recomiendo lugares cerca de ti.</string>
+    <string name="chat_suggestion_dinner">Recomiéndame un lugar tradicional para cenar por menos de 40k</string>
+    <string name="chat_suggestion_free">¿Qué puedo visitar gratis cerca de mí?</string>
+    <string name="chat_suggestion_view">Quiero un mirador para ver el atardecer</string>
+    <string name="chat_thinking">Pensando…</string>
+    <string name="chat_filters">Tus filtros: %1$s · %2$s · %3$s</string>
+    <string name="chat_show_on_map">Ver en mapa</string>
+    <string name="chat_retry">Reintentar</string>
+    <string name="chat_error_missing_key">Falta GROQ_API_KEY en local.properties.</string>
+    <string name="chat_error_unauthorized">La clave de Groq no es válida.</string>
+    <string name="chat_error_rate_limited">Demasiadas consultas seguidas. Espera un momento e inténtalo de nuevo.</string>
+    <string name="chat_error_network">No se pudo conectar con la IA. Revisa tu conexión.</string>
+    <string name="chat_error_invalid">La IA devolvió una respuesta que no pude entender.</string>
+
+    <!-- Cuenta (GDPR) -->
+    <string name="profile_delete_account">Eliminar cuenta y datos</string>
+    <string name="profile_delete_title">¿Eliminar tu cuenta?</string>
+    <string name="profile_delete_message">Se borrarán para siempre tu perfil, tus logros y tus itinerarios guardados, en este dispositivo y en la nube. Esta acción no se puede deshacer.</string>
+    <string name="profile_delete_confirm">Eliminar definitivamente</string>
+    <string name="profile_delete_failed">No se pudo eliminar la cuenta. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="profile_achievement_unlocked">Desbloqueado</string>
 </resources>
