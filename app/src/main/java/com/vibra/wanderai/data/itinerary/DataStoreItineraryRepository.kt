@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import org.json.JSONArray
 import org.json.JSONException
@@ -65,6 +66,26 @@ class DataStoreItineraryRepository(
         if (active.value?.id == itineraryId) active.value = null
     }
 
+    /** Device-only repository: nothing to pull (see [SyncedItineraryRepository]). */
+    override suspend fun refreshFromCloud() = Unit
+
+    override suspend fun clearLocal() {
+        context.itineraryDataStore.edit { prefs ->
+            prefs.remove(SAVED_KEY)
+            prefs.remove(OWNER_KEY)
+        }
+        active.value = null
+    }
+
+    /** Supabase user the saved itineraries on this device belong to (null = never synced). */
+    suspend fun ownerId(): String? = context.itineraryDataStore.data.first()[OWNER_KEY]
+
+    suspend fun setOwner(userId: String) {
+        context.itineraryDataStore.edit { it[OWNER_KEY] = userId }
+    }
+
+    suspend fun snapshot(): List<Itinerary> = savedItineraries.first()
+
     private fun encode(itinerary: Itinerary): JSONObject = JSONObject()
         .put(F_ID, itinerary.id)
         .put(F_CREATED, itinerary.createdAtMillis)
@@ -105,6 +126,7 @@ class DataStoreItineraryRepository(
     private companion object {
         const val TAG = "ItineraryRepository"
         val SAVED_KEY = stringPreferencesKey("saved_itineraries")
+        val OWNER_KEY = stringPreferencesKey("owner_user_id")
         const val F_ID = "id"
         const val F_CREATED = "createdAt"
         const val F_STOPS = "stops"
