@@ -71,6 +71,7 @@ class StartNavigationToPlaceUseCaseTest {
         val routes = mutableListOf<ActiveRouteState>()
         private val reachable = connected
         override suspend fun refreshConnectedWatches() = connectedWatches.value
+        override fun onWatchMessage(path: String, data: ByteArray) = Unit
         override suspend fun sendNavigationEvent(event: NavigationEvent): Result<Int> {
             if (!reachable) return Result.failure(IllegalStateException("NOT_CONNECTED"))
             sent += event
@@ -108,6 +109,7 @@ class StartNavigationToPlaceUseCaseTest {
         override fun repeatInstruction(instruction: String) = Unit
         override fun guidancePaused() = Unit
         override fun guidanceResumed() = Unit
+        override fun navigationStopped() = Unit
     }
 
     private class Setup(val useCase: StartNavigationToPlaceUseCase, val wear: FakeWear, val itineraries: FakeItineraries,
