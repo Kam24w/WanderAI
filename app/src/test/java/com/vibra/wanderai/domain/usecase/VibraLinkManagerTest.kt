@@ -66,6 +66,7 @@ class VibraLinkManagerTest {
         }
         override suspend fun sendNavigationEvent(event: NavigationEvent) = Result.success(1)
         override suspend fun updateActiveRoute(route: ActiveRouteState) = Result.success(Unit)
+        override fun onWatchMessage(path: String, data: ByteArray) = Unit
     }
 
     private val emulator = WearWatch("emu-1", "Wear OS Emulator")
