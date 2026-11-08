@@ -151,6 +151,12 @@ interface WearDataLayerRepository {
     /** Actions received from the watch on `/vibra/user_action`. */
     val userActions: Flow<WatchUserAction>
 
+    /**
+     * Entry point for a raw Data Layer message (e.g. from the background
+     * `WatchActionListenerService`); valid user actions are emitted on [userActions].
+     */
+    fun onWatchMessage(path: String, data: ByteArray)
+
     /** Sends [event] to every connected watch; succeeds with the number of watches reached. */
     suspend fun sendNavigationEvent(event: NavigationEvent): Result<Int>
 
@@ -170,4 +176,6 @@ interface GuidanceAnnouncer {
     fun repeatInstruction(instruction: String)
     fun guidancePaused()
     fun guidanceResumed()
+    /** The traveler stopped the route from the watch. */
+    fun navigationStopped()
 }
