@@ -30,6 +30,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Tune
@@ -70,6 +71,7 @@ import com.vibra.wanderai.domain.model.ChatMessage
 import com.vibra.wanderai.domain.model.ChatRole
 import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.Place
+import com.vibra.wanderai.domain.model.PlaceSource
 import com.vibra.wanderai.presentation.common.NumberInput
 import com.vibra.wanderai.presentation.common.color
 import com.vibra.wanderai.presentation.common.currentLanguageCode
@@ -94,10 +96,13 @@ fun TravelChatScreen(
     onBack: () -> Unit,
     onShowPlaceOnMap: () -> Unit,
 ) {
-    val viewModel = wanderViewModel { TravelChatViewModel(it.travelChatRepository, it.planSession, it.observeTravelerLocation) }
+    val viewModel = wanderViewModel {
+        TravelChatViewModel(it.travelChatRepository, it.chatHistoryRepository, it.planSession, it.observeTravelerLocation)
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val language = currentLanguageCode()
     var input by rememberSaveable { mutableStateOf("") }
+    var showHistory by rememberSaveable { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
     val send = { text: String ->
@@ -119,6 +124,12 @@ fun TravelChatScreen(
             title = stringResource(R.string.chat_title),
             onBackClick = onBack,
             actions = {
+                IconButton(onClick = {
+                    viewModel.loadHistory()
+                    showHistory = true
+                }) {
+                    Icon(Icons.Outlined.History, contentDescription = stringResource(R.string.chat_history_title))
+                }
                 if (state.messages.isNotEmpty()) {
                     IconButton(onClick = viewModel::newConversation) {
                         Icon(Icons.Outlined.RestartAlt, contentDescription = stringResource(R.string.chat_new))
@@ -159,7 +170,7 @@ fun TravelChatScreen(
                         message = message,
                         origin = state.location.point,
                         onPlaceClick = { place ->
-                            viewModel.showOnMap(place.id)
+                            viewModel.showOnMap(place)
                             onShowPlaceOnMap()
                         },
                     )
@@ -176,11 +187,36 @@ fun TravelChatScreen(
             }
         }
 
+        if (state.saveFailed) {
+            Text(
+                stringResource(R.string.chat_history_save_failed),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+            )
+        }
         InputBar(
             value = input,
             onValueChange = { input = it },
             enabled = !state.isSending,
             onSend = { send(input) },
+        )
+    }
+
+    if (showHistory) {
+        ChatHistorySheet(
+            state = state.history,
+            currentConversationId = state.conversationId,
+            onOpen = {
+                viewModel.openConversation(it)
+                showHistory = false
+            },
+            onDelete = viewModel::deleteConversation,
+            onDeleteAll = viewModel::deleteAllHistory,
+            onRetry = viewModel::loadHistory,
+            onDismiss = { showHistory = false },
         )
     }
 }
@@ -314,7 +350,8 @@ private fun RecommendationCard(place: Place, distanceMeters: Int, onClick: () ->
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = stringResource(place.category.labelRes),
+                        text = stringResource(place.category.labelRes) +
+                            if (place.source == PlaceSource.GOOGLE) " · " + stringResource(R.string.chat_place_nearby) else "",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -326,6 +363,7 @@ private fun RecommendationCard(place: Place, distanceMeters: Int, onClick: () ->
                 Text(
                     text = " ${place.rating} · " +
                         (if (place.averageCostCop == 0) stringResource(R.string.common_free) else formatCopShort(place.averageCostCop)) +
+                        (if (place.isCostEstimated && place.averageCostCop > 0) " " + stringResource(R.string.chat_cost_estimated) else "") +
                         " · " + formatDistance(distanceMeters),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
