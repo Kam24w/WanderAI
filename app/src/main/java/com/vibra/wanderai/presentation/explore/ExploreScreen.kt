@@ -92,6 +92,7 @@ fun ExploreScreen(
         ExploreViewModel(
             it.placesRepository, it.itineraryRepository, it.vibraRepository,
             it.syncItineraryToWatch, it.wearDataLayerRepository, it.observeTravelerLocation, it.planSession,
+            it.routesRepository,
         )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -115,18 +116,14 @@ fun ExploreScreen(
     }
 
     // Recommendation tapped in the chat / itinerary: select it and fly there smoothly.
-    LaunchedEffect(state.focusRequest, state.places) {
+    LaunchedEffect(state.focusRequest) {
         val request = state.focusRequest ?: return@LaunchedEffect
-        val place = state.places.firstOrNull { it.id == request.placeId } ?: return@LaunchedEffect
         viewModel.onFocusHandled(request)
-        mapController.flyTo(place.location)
+        mapController.flyTo(request.place.location)
     }
 
-    val route = remember(state.activeItinerary, state.location.point) {
-        state.activeItinerary?.let { itinerary ->
-            listOf(state.location.point) + itinerary.stops.map { it.place.location }
-        }.orEmpty()
-    }
+    // Real streets from the Routes API (straight segments while loading or if it fails).
+    val route = state.routePath.points
 
     Column(
         modifier = Modifier
