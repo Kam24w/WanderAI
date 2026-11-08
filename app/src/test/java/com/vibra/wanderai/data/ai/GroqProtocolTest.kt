@@ -7,6 +7,7 @@ import com.vibra.wanderai.domain.model.ItineraryFilters
 import com.vibra.wanderai.domain.model.LocalizedText
 import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.PlaceCategory
+import com.vibra.wanderai.domain.model.PlaceSource
 import com.vibra.wanderai.domain.model.TravelChatContext
 import com.vibra.wanderai.domain.model.TravelerLocation
 import kotlinx.serialization.json.Json
@@ -69,8 +70,24 @@ class GroqProtocolTest {
         assertTrue(prompt.contains("1.21360, -77.28110 (live GPS)"))
         assertTrue(prompt.contains("Budget: 40000 COP"))
         assertTrue(prompt.contains("Max walking distance: 1.25 km"))
-        assertTrue(prompt.contains("cuy-house | Casa del Cuy | RESTAURANT | cost_cop=35000"))
+        assertTrue(prompt.contains("cuy-house | Casa del Cuy | RESTAURANT | src=curated | cost_cop=35000"))
         assertTrue(prompt.contains("Spanish"))
+    }
+
+    @Test
+    fun `google nearby places are flagged with estimated cost and sorted by distance`() {
+        val nearbyPark = place.copy(
+            id = "g:abc",
+            name = "Parque Infantil",
+            category = PlaceCategory.PARK,
+            location = GeoPoint.PASTO_CENTER,
+            averageCostCop = 0,
+            source = PlaceSource.GOOGLE,
+            isCostEstimated = true,
+        )
+        val prompt = GroqProtocol.systemPrompt(context, listOf(place, nearbyPark))
+        assertTrue(prompt.contains("g:abc | Parque Infantil | PARK | src=google_nearby | cost_cop~0"))
+        assertTrue(prompt.indexOf("g:abc") < prompt.indexOf("cuy-house")) // closer first
     }
 
     @Test
