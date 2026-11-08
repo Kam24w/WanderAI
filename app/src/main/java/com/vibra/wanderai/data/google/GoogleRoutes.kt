@@ -98,12 +98,21 @@ object GoogleRoutesProtocol {
 /** Walking paths along real streets from the Google Routes API. */
 class GoogleRoutesRepository(private val client: GoogleApiClient) : RoutesRepository {
 
+    /** "Fijar rumbo" and the map ask for the same path back to back: answer the second from memory. */
+    @Volatile private var last: Pair<List<GeoPoint>, List<GeoPoint>>? = null
+
     override suspend fun walkingPath(waypoints: List<GeoPoint>): Result<List<GeoPoint>> = try {
+        last?.takeIf { it.first == waypoints }?.let { return Result.success(it.second) }
         check(client.isConfigured) { "MAPS_API_KEY is not configured" }
         val path = GoogleRoutesProtocol.parsePath(
             client.post(GoogleRoutesProtocol.ENDPOINT, GoogleRoutesProtocol.FIELD_MASK, GoogleRoutesProtocol.requestBody(waypoints)),
         )
-        if (path.size < 2) Result.failure(IllegalStateException("No walking route")) else Result.success(path)
+        if (path.size < 2) {
+            Result.failure(IllegalStateException("No walking route"))
+        } else {
+            last = waypoints to path
+            Result.success(path)
+        }
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
