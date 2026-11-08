@@ -1,6 +1,7 @@
 package com.vibra.wanderai.domain.usecase
 
 import com.vibra.wanderai.domain.model.ItineraryFilters
+import com.vibra.wanderai.domain.model.Place
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,9 +25,12 @@ class PlanSession {
 
     fun updateFilters(transform: (ItineraryFilters) -> ItineraryFilters) = _filters.update(transform)
 
-    /** Asks the map to move to [placeId]; every call is a new request, even for the same place. */
-    fun focusPlace(placeId: String) {
-        _mapFocus.value = MapFocusRequest(placeId, ++focusSequence)
+    /**
+     * Asks the map to move to [place]; every call is a new request, even for the same place.
+     * The whole place travels with the request because Google Places results are not in the catalogue.
+     */
+    fun focusPlace(place: Place) {
+        _mapFocus.value = MapFocusRequest(place, ++focusSequence)
     }
 
     /** Called by the map once it has handled [request]. */
@@ -35,4 +39,6 @@ class PlanSession {
     }
 }
 
-data class MapFocusRequest(val placeId: String, val sequence: Long)
+data class MapFocusRequest(val place: Place, val sequence: Long) {
+    val placeId: String get() = place.id
+}
