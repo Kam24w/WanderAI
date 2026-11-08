@@ -9,6 +9,7 @@ import com.vibra.wanderai.domain.model.TravelerLocation
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.usecase.GenerateItineraryUseCase
 import com.vibra.wanderai.domain.usecase.ObserveTravelerLocationUseCase
+import com.vibra.wanderai.domain.usecase.PlanSession
 import com.vibra.wanderai.presentation.common.LocationAwareViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,7 +33,6 @@ data class RecommendationsUiState(
 }
 
 private data class FormState(
-    val filters: ItineraryFilters = ItineraryFilters.DEFAULT,
     val isGenerating: Boolean = false,
     val result: Itinerary? = null,
     val noMatches: Boolean = false,
@@ -42,15 +42,17 @@ class RecommendationsViewModel(
     private val generateItinerary: GenerateItineraryUseCase,
     private val itineraryRepository: ItineraryRepository,
     observeTravelerLocation: ObserveTravelerLocationUseCase,
+    /** Filters live here so the AI chat sends the same values the traveler picked. */
+    private val planSession: PlanSession,
 ) : LocationAwareViewModel(observeTravelerLocation) {
 
     private val form = MutableStateFlow(FormState())
     private val savedIds = itineraryRepository.savedItineraries.map { list -> list.map(Itinerary::id).toSet() }
 
     val state: StateFlow<RecommendationsUiState> =
-        combine(form, location, savedIds) { f, loc, saved ->
+        combine(form, planSession.filters, location, savedIds) { f, filters, loc, saved ->
             RecommendationsUiState(
-                filters = f.filters,
+                filters = filters,
                 isGenerating = f.isGenerating,
                 result = f.result,
                 noMatches = f.noMatches,
@@ -73,13 +75,23 @@ class RecommendationsViewModel(
         it.copy(maxDistanceKm = ((km * 10).roundToInt() / 10f).coerceIn(ItineraryFilters.DISTANCE_RANGE_KM))
     }
 
+    /** Exact budget typed in the dialog: no slider step rounding, only clamped to the range. */
+    fun setExactBudget(cop: Int) = updateFilters {
+        it.copy(budgetCop = cop.coerceIn(ItineraryFilters.BUDGET_RANGE_COP))
+    }
+
+    /** Exact distance typed in the dialog, kept to 2 decimals (10 m). */
+    fun setExactDistance(km: Float) = updateFilters {
+        it.copy(maxDistanceKm = ((km * 100).roundToInt() / 100f).coerceIn(ItineraryFilters.DISTANCE_RANGE_KM))
+    }
+
     fun toggleCategory(category: PlaceCategory) = updateFilters {
         it.copy(categories = if (category in it.categories) it.categories - category else it.categories + category)
     }
 
     fun generate() {
         if (!state.value.canGenerate) return
-        val filters = form.value.filters
+        val filters = planSession.filters.value
         val origin = location.value.point
         form.update { it.copy(isGenerating = true, noMatches = false) }
         viewModelScope.launch {
@@ -108,6 +120,14 @@ class RecommendationsViewModel(
         form.update { it.copy(result = null) }
     }
 
-    private inline fun updateFilters(crossinline transform: (ItineraryFilters) -> ItineraryFilters) =
-        form.update { it.copy(filters = transform(it.filters), noMatches = false) }
+    /** Activates the generated route and asks the map to fly to [placeId]. */
+    fun showStopOnMap(placeId: String) {
+        activateResult()
+        planSession.focusPlace(placeId)
+    }
+
+    private fun updateFilters(transform: (ItineraryFilters) -> ItineraryFilters) {
+        planSession.updateFilters(transform)
+        form.update { it.copy(noMatches = false) }
+    }
 }
