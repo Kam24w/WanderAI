@@ -23,6 +23,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.SharingStarted
@@ -167,6 +170,19 @@ class ExploreViewModel(
             pendingRouteFit = ui.pendingRouteFit,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
+
+    init {
+        // The route can also end outside this screen (e.g. STOP_NAVIGATION from the watch):
+        // drop the course banner when the active itinerary goes away.
+        viewModelScope.launch {
+            itineraryRepository.activeItinerary
+                .map { it == null }
+                .distinctUntilChanged()
+                .drop(1)
+                .filter { it }
+                .collect { local.update { it.copy(course = CourseState.Idle, pendingRouteFit = false) } }
+        }
+    }
 
     fun selectPlace(placeId: String?) = local.update { it.copy(selectedPlaceId = placeId) }
 
