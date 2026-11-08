@@ -180,6 +180,7 @@
     <string name="wear_instruction_alert">Heads up: check your route on the phone</string>
     <string name="wear_guidance_paused">Guidance paused from the watch</string>
     <string name="wear_guidance_resumed">Guidance resumed from the watch</string>
+    <string name="wear_navigation_stopped">Route stopped from the watch</string>
     <string name="wear_watch_connected">Wear OS · %1$s</string>
 
     <!-- Profile & achievements -->
