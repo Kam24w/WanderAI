@@ -182,6 +182,7 @@
     <string name="wear_instruction_alert">Atención: revisa tu ruta en el teléfono</string>
     <string name="wear_guidance_paused">Guía pausada desde el reloj</string>
     <string name="wear_guidance_resumed">Guía reanudada desde el reloj</string>
+    <string name="wear_navigation_stopped">Ruta detenida desde el reloj</string>
     <string name="wear_watch_connected">Wear OS · %1$s</string>
 
     <!-- Perfil y logros -->
