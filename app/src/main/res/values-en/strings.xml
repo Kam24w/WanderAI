@@ -37,16 +37,15 @@
     <string name="name_label">Full name</string>
     <string name="email_label">Email</string>
     <string name="password_label">Password</string>
-    <string name="password_hint">At least 8 characters</string>
+    <string name="password_hint">At least 8 characters, with an uppercase letter, a number and a symbol</string>
     <string name="confirm_password_label">Confirm password</string>
     <string name="password_show">Show password</string>
     <string name="password_hide">Hide password</string>
 
     <!-- Validation errors -->
     <string name="error_empty_fields">Please fill in every field</string>
-    <string name="error_invalid_email">Enter a valid email address</string>
+    <string name="error_invalid_email">Enter a valid email, for example name@domain.com</string>
     <string name="error_login_failed">Wrong credentials or unconfirmed account. Please try again.</string>
-    <string name="error_password_length">Password must be at least 8 characters</string>
     <string name="error_passwords_mismatch">Passwords do not match</string>
     <string name="error_register_failed">We couldn\'t create your account. Please try again.</string>
 
@@ -271,4 +270,38 @@
     <string name="profile_delete_confirm">Delete permanently</string>
     <string name="profile_delete_failed">The account could not be deleted. Check your connection and try again.</string>
     <string name="profile_achievement_unlocked">Unlocked</string>
+    <!-- Account and profile validation -->
+    <string name="error_fix_fields">Check the fields marked in red.</string>
+    <string name="error_name_short">Your name must be at least 2 characters.</string>
+    <string name="error_name_long">Your name cannot be longer than 50 characters.</string>
+    <string name="error_name_chars">Use only letters, spaces, apostrophes, dots or hyphens.</string>
+    <string name="name_counter">%1$d/%2$d</string>
+    <string name="password_rules_title">Your password needs:</string>
+    <string name="password_rule_length">Between 8 and 72 characters</string>
+    <string name="password_rule_upper">At least one uppercase letter</string>
+    <string name="password_rule_digit">At least one number</string>
+    <string name="password_rule_special">At least one special character (!@#$%…)</string>
+    <string name="password_rule_predictable">No sequences, repeats or common passwords (1234, abcd, aaaa)</string>
+    <string name="password_rule_met">met</string>
+    <string name="password_rule_pending">pending</string>
+
+    <!-- Chat history -->
+    <string name="chat_history_title">Chat history</string>
+    <string name="chat_history_empty">No saved conversations yet. They are saved automatically after every answer.</string>
+    <string name="chat_history_error">Your history could not be loaded.</string>
+    <string name="chat_history_open">Resume conversation</string>
+    <string name="chat_history_delete">Delete conversation</string>
+    <string name="chat_history_delete_title">Delete this conversation?</string>
+    <string name="chat_history_delete_message">It will be removed from your history on all your devices.</string>
+    <string name="chat_history_delete_all">Delete all</string>
+    <string name="chat_history_delete_all_title">Delete the whole history?</string>
+    <string name="chat_history_delete_all_message">All your conversations with the AI will be erased. This cannot be undone.</string>
+    <string name="chat_history_delete_failed">Could not delete. Check your connection.</string>
+    <string name="chat_history_save_failed">This conversation could not be saved to your history.</string>
+    <plurals name="chat_history_messages">
+        <item quantity="one">%d message</item>
+        <item quantity="other">%d messages</item>
+    </plurals>
+    <string name="chat_place_nearby">Near you</string>
+    <string name="chat_cost_estimated">approx.</string>
 </resources>
