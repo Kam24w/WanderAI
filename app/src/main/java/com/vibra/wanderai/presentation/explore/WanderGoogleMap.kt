@@ -11,6 +11,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.CameraPositionState
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
@@ -32,6 +33,9 @@ interface ExploreMapController {
     suspend fun flyTo(point: GeoPoint)
     suspend fun zoomIn()
     suspend fun zoomOut()
+
+    /** Frames the whole [path] (origin to destination) on screen. */
+    suspend fun showPath(path: List<GeoPoint>)
 }
 
 /** Controller for the Google Maps SDK view. */
@@ -44,10 +48,19 @@ class GoogleMapController(val cameraPositionState: CameraPositionState) : Explor
     override suspend fun zoomIn() = cameraPositionState.animate(CameraUpdateFactory.zoomIn(), ZOOM_DURATION_MS)
     override suspend fun zoomOut() = cameraPositionState.animate(CameraUpdateFactory.zoomOut(), ZOOM_DURATION_MS)
 
+    override suspend fun showPath(path: List<GeoPoint>) {
+        if (path.size < 2) return path.firstOrNull()?.let { flyTo(it) } ?: Unit
+        val bounds = LatLngBounds.builder().apply { path.forEach { include(it.toLatLng()) } }.build()
+        runCatching {
+            cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, ROUTE_PADDING_PX), FLY_DURATION_MS)
+        }
+    }
+
     private companion object {
         const val FOCUS_ZOOM = 17f
         const val FLY_DURATION_MS = 900
         const val ZOOM_DURATION_MS = 300
+        const val ROUTE_PADDING_PX = 160
     }
 }
 
@@ -56,6 +69,12 @@ class CanvasMapController(private val viewport: MapViewport) : ExploreMapControl
     override suspend fun flyTo(point: GeoPoint) = viewport.animateTo(point, targetScale = 1.6f)
     override suspend fun zoomIn() = viewport.zoomBy(1.4f)
     override suspend fun zoomOut() = viewport.zoomBy(1 / 1.4f)
+
+    override suspend fun showPath(path: List<GeoPoint>) {
+        if (path.isEmpty()) return
+        val middle = GeoPoint(path.map { it.latitude }.average(), path.map { it.longitude }.average())
+        viewport.animateTo(middle, targetScale = 1.2f)
+    }
 }
 
 @Composable
