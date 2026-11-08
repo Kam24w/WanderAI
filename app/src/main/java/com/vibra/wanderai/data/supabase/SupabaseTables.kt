@@ -14,6 +14,7 @@ internal object SupabaseTables {
     const val ACHIEVEMENTS = "achievements"
     const val USER_ACHIEVEMENTS = "user_achievements"
     const val SAVED_ITINERARIES = "saved_itineraries"
+    const val CHAT_HISTORY = "chat_history"
 
     /** RPC `security definer` que borra `auth.users` del llamante; el resto cae en cascada. */
     const val RPC_DELETE_ACCOUNT = "delete_user_account"
