@@ -6,12 +6,16 @@ import com.vibra.wanderai.core.DevEnvironment
 import com.vibra.wanderai.core.network.SupabaseConfig
 import com.vibra.wanderai.data.ai.GroqRecommendationRepository
 import com.vibra.wanderai.data.auth.SupabaseAuthRepository
+import com.vibra.wanderai.data.google.GoogleApiClient
+import com.vibra.wanderai.data.google.GooglePlacesRepository
+import com.vibra.wanderai.data.google.GoogleRoutesRepository
 import com.vibra.wanderai.data.itinerary.DataStoreItineraryRepository
 import com.vibra.wanderai.data.itinerary.SyncedItineraryRepository
 import com.vibra.wanderai.data.location.AndroidLocationRepository
 import com.vibra.wanderai.data.places.PastoPlacesRepository
 import com.vibra.wanderai.data.settings.AndroidSettingsRepository
 import com.vibra.wanderai.data.supabase.SupabaseAchievementsRepository
+import com.vibra.wanderai.data.supabase.SupabaseChatHistoryRepository
 import com.vibra.wanderai.data.supabase.SupabaseProfileRepository
 import com.vibra.wanderai.data.traveler.LocalTravelerRepository
 import com.vibra.wanderai.data.vibra.BleVibraRepository
@@ -21,10 +25,13 @@ import com.vibra.wanderai.data.wear.LocalDevBridge
 import com.vibra.wanderai.data.wear.WearableDataLayerRepository
 import com.vibra.wanderai.domain.repository.AchievementsRepository
 import com.vibra.wanderai.domain.repository.AuthRepository
+import com.vibra.wanderai.domain.repository.ChatHistoryRepository
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.LocationRepository
+import com.vibra.wanderai.domain.repository.NearbyPlacesRepository
 import com.vibra.wanderai.domain.repository.PlacesRepository
 import com.vibra.wanderai.domain.repository.ProfileRepository
+import com.vibra.wanderai.domain.repository.RoutesRepository
 import com.vibra.wanderai.domain.repository.SettingsRepository
 import com.vibra.wanderai.domain.repository.TravelChatRepository
 import com.vibra.wanderai.domain.repository.TravelerRepository
@@ -70,8 +77,18 @@ class AppContainer(context: Context) {
     val travelerRepository: TravelerRepository by lazy {
         LocalTravelerRepository(itineraryRepository, achievementsRepository)
     }
+    /** Google Maps Platform web services (Routes, Places New) with the Android-restricted key. */
+    private val googleApiClient by lazy { GoogleApiClient(appContext, BuildConfig.MAPS_API_KEY) }
+    val routesRepository: RoutesRepository by lazy { GoogleRoutesRepository(googleApiClient) }
+    val nearbyPlacesRepository: NearbyPlacesRepository by lazy { GooglePlacesRepository(googleApiClient) }
+    val chatHistoryRepository: ChatHistoryRepository by lazy { SupabaseChatHistoryRepository(SupabaseConfig.client) }
     val travelChatRepository: TravelChatRepository by lazy {
-        GroqRecommendationRepository(BuildConfig.GROQ_API_KEY, placesRepository, BuildConfig.GROQ_MODEL)
+        GroqRecommendationRepository(
+            apiKey = BuildConfig.GROQ_API_KEY,
+            placesRepository = placesRepository,
+            nearbyPlaces = nearbyPlacesRepository,
+            model = BuildConfig.GROQ_MODEL,
+        )
     }
     val vibraRepository: VibraRepository by lazy { BleVibraRepository(appContext, applicationScope) }
     val wearDataLayerRepository: WearDataLayerRepository by lazy {
