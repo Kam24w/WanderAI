@@ -3,6 +3,7 @@ package com.vibra.wanderai.data.ai
 import com.vibra.wanderai.domain.model.ChatMessage
 import com.vibra.wanderai.domain.model.ChatRole
 import com.vibra.wanderai.domain.model.Place
+import com.vibra.wanderai.domain.model.PlaceSource
 import com.vibra.wanderai.domain.model.TravelChatContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -80,13 +81,14 @@ object GroqProtocol {
         val origin = context.location.point
         val language = if (context.languageCode.startsWith("en")) "English" else "Spanish (Colombia)"
         val categories = filters.categories.joinToString { it.name }.ifEmpty { "any" }
-        val places = catalogue.joinToString("\n") { place ->
+        val places = catalogue.sortedBy { origin.distanceTo(it.location) }.joinToString("\n") { place ->
             val meters = origin.distanceTo(place.location).roundToInt()
             listOf(
                 place.id,
                 place.name,
                 place.category.name,
-                "cost_cop=${place.averageCostCop}",
+                if (place.source == PlaceSource.GOOGLE) "src=google_nearby" else "src=curated",
+                (if (place.isCostEstimated) "cost_cop~" else "cost_cop=") + place.averageCostCop,
                 "rating=${place.rating}",
                 "distance_m=$meters",
                 "visit_min=${place.visitMinutes}",
@@ -107,7 +109,11 @@ object GroqProtocol {
             Respect these filters unless the traveler's message asks otherwise (explicit limits in the
             message, such as "less than 40k", take priority).
 
-            CATALOGUE (id | name | category | cost | rating | distance | visit | summary)
+            CATALOGUE (id | name | category | source | cost | rating | distance | visit | summary)
+            "curated" = landmarks of Pasto; "google_nearby" = real places around the traveler right now
+            (Google Places). Prefer google_nearby places when the traveler asks for something close by,
+            such as a park, café or restaurant. "cost_cop~" is an estimate from Google's price level: say
+            "aprox."/"approx." when you mention it.
             $places
 
             Respond with a JSON object and nothing else:
