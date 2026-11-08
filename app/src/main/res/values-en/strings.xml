@@ -304,4 +304,11 @@
     </plurals>
     <string name="chat_place_nearby">Near you</string>
     <string name="chat_cost_estimated">approx.</string>
+    <!-- Set course (Explore) -->
+    <string name="explore_set_course">Set course</string>
+    <string name="explore_course_resend">Resend course</string>
+    <string name="explore_course_starting">Calculating route…</string>
+    <string name="explore_course_synced">Course set: directions sent to your Vibra</string>
+    <string name="explore_course_no_watch">Course set. Connect your Vibra to feel the vibrations</string>
+    <string name="explore_course_straight">No street route found: showing a straight line</string>
 </resources>
