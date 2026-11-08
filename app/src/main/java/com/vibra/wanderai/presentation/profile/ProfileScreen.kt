@@ -1,6 +1,7 @@
 package com.vibra.wanderai.presentation.profile
 
 import android.content.Intent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.PersonRemove
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Share
@@ -36,10 +38,12 @@ import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -86,10 +90,13 @@ fun ProfileScreen(
     onSettingsClick: () -> Unit,
     onOpenItinerary: () -> Unit,
 ) {
-    val viewModel = wanderViewModel { ProfileViewModel(it.authRepository, it.travelerRepository, it.itineraryRepository) }
+    val viewModel = wanderViewModel {
+        ProfileViewModel(it.authRepository, it.travelerRepository, it.itineraryRepository, it.deleteAccount)
+    }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var editing by rememberSaveable { mutableStateOf(false) }
+    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
 
     val reportText = state.stats?.let { stats ->
         stringResource(
@@ -162,6 +169,10 @@ fun ProfileScreen(
                     modifier = Modifier.weight(1f),
                 ) { editing = true }
             }
+            DeleteAccountButton(
+                isDeleting = state.isDeletingAccount,
+                onClick = { confirmingDelete = true },
+            )
             Spacer(Modifier.height(4.dp))
         }
     }
@@ -178,6 +189,84 @@ fun ProfileScreen(
             onSave = { name -> viewModel.updateDisplayName(name) { editing = false } },
         )
     }
+
+    if (confirmingDelete || state.accountDeletionFailed) {
+        DeleteAccountDialog(
+            isDeleting = state.isDeletingAccount,
+            failed = state.accountDeletionFailed,
+            onConfirm = viewModel::deleteAccountAndData,
+            onDismiss = {
+                confirmingDelete = false
+                viewModel.clearDeleteError()
+            },
+        )
+    }
+}
+
+/** GDPR: erases the Supabase user and, by cascade, all of their data. */
+@Composable
+private fun DeleteAccountButton(isDeleting: Boolean, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = !isDeleting,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp),
+    ) {
+        if (isDeleting) {
+            CircularProgressIndicator(strokeWidth = 2.dp, color = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+        } else {
+            Icon(Icons.Outlined.PersonRemove, contentDescription = null, modifier = Modifier.size(18.dp))
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(stringResource(R.string.profile_delete_account), fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun DeleteAccountDialog(
+    isDeleting: Boolean,
+    failed: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isDeleting) onDismiss() },
+        icon = { Icon(Icons.Outlined.PersonRemove, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+        title = { Text(stringResource(R.string.profile_delete_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.profile_delete_message))
+                if (failed) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        stringResource(R.string.profile_delete_failed),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                enabled = !isDeleting,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) {
+                if (isDeleting) {
+                    CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                } else {
+                    Text(stringResource(R.string.profile_delete_confirm), fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isDeleting) { Text(stringResource(R.string.common_cancel)) }
+        },
+    )
 }
 
 @Composable
@@ -285,7 +374,14 @@ private fun AchievementBadge(achievement: Achievement) {
         }
         Spacer(Modifier.height(6.dp))
         Text(label, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, maxLines = 2, minLines = 2)
-        if (!achievement.isUnlocked) {
+        if (achievement.isUnlocked) {
+            Text(
+                stringResource(R.string.profile_achievement_unlocked),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = WanderTheme.colors.brandGold,
+            )
+        } else {
             Spacer(Modifier.height(4.dp))
             LinearProgressIndicator(
                 progress = { achievement.progress },
