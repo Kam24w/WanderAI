@@ -66,6 +66,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.vibra.wanderai.domain.usecase.CredentialValidator
+import com.vibra.wanderai.domain.usecase.PasswordRule
 import com.vibra.wanderai.R
 import com.vibra.wanderai.presentation.common.wanderViewModel
 import com.vibra.wanderai.presentation.components.PrimaryButton
@@ -169,6 +175,7 @@ fun RegisterScreen(onBackToLogin: () -> Unit) {
             return@AuthScaffold
         }
 
+        val showErrors = state.showFieldErrors
         AuthTextField(
             value = state.name,
             onValueChange = viewModel::onNameChange,
@@ -177,6 +184,8 @@ fun RegisterScreen(onBackToLogin: () -> Unit) {
             enabled = !state.isLoading,
             keyboardType = KeyboardType.Text,
             onImeAction = { focus.moveFocus(FocusDirection.Down) },
+            error = state.nameIssue?.takeIf { showErrors }?.let { stringResource(it.messageRes) },
+            supporting = stringResource(R.string.name_counter, state.name.trim().length, CredentialValidator.NAME_MAX),
         )
         Spacer(Modifier.height(12.dp))
         AuthTextField(
@@ -187,6 +196,7 @@ fun RegisterScreen(onBackToLogin: () -> Unit) {
             enabled = !state.isLoading,
             keyboardType = KeyboardType.Email,
             onImeAction = { focus.moveFocus(FocusDirection.Down) },
+            error = if (showErrors && !state.isEmailValid) stringResource(R.string.error_invalid_email) else null,
         )
         Spacer(Modifier.height(12.dp))
         PasswordField(
@@ -197,12 +207,18 @@ fun RegisterScreen(onBackToLogin: () -> Unit) {
             enabled = !state.isLoading,
             imeAction = ImeAction.Next,
             onImeAction = { focus.moveFocus(FocusDirection.Down) },
+            isError = showErrors && state.failedPasswordRules.isNotEmpty(),
         )
+        AnimatedVisibility(visible = state.password.isNotEmpty() || showErrors) {
+            PasswordChecklist(failed = state.failedPasswordRules, highlightFailures = showErrors)
+        }
         Spacer(Modifier.height(12.dp))
         PasswordField(
             value = state.confirmPassword,
             onValueChange = viewModel::onConfirmPasswordChange,
             label = stringResource(R.string.confirm_password_label),
+            supporting = if (showErrors && !state.passwordsMatch) stringResource(R.string.error_passwords_mismatch) else null,
+            isError = showErrors && !state.passwordsMatch,
             enabled = !state.isLoading,
             imeAction = ImeAction.Done,
             onImeAction = {
@@ -351,8 +367,12 @@ private fun AuthTextField(
     enabled: Boolean,
     keyboardType: KeyboardType,
     onImeAction: () -> Unit,
+    error: String? = null,
+    supporting: String? = null,
 ) {
     OutlinedTextField(
+        isError = error != null,
+        supportingText = (error ?: supporting)?.let { { Text(it) } },
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
@@ -376,9 +396,11 @@ private fun PasswordField(
     imeAction: ImeAction,
     onImeAction: () -> Unit,
     supporting: String? = null,
+    isError: Boolean = false,
 ) {
     var visible by rememberSaveable { mutableStateOf(false) }
     OutlinedTextField(
+        isError = isError,
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
@@ -403,6 +425,46 @@ private fun PasswordField(
         keyboardActions = KeyboardActions(onNext = { onImeAction() }, onDone = { onImeAction() }),
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+/** Live password requirements: green when met, red after a failed submit. */
+@Composable
+private fun PasswordChecklist(failed: Set<PasswordRule>, highlightFailures: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, top = 6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            stringResource(R.string.password_rules_title),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        PasswordRule.entries.forEach { rule ->
+            val met = rule !in failed
+            val color = when {
+                met -> WanderTheme.colors.success
+                highlightFailures -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+            val state = stringResource(if (met) R.string.password_rule_met else R.string.password_rule_pending)
+            val label = stringResource(rule.labelRes)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "$label, $state" },
+            ) {
+                Icon(
+                    if (met) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(label, style = MaterialTheme.typography.bodySmall, color = color)
+            }
+        }
+    }
 }
 
 @Composable
