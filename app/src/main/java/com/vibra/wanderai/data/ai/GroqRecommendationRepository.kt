@@ -6,6 +6,8 @@ import com.vibra.wanderai.domain.model.ChatReply
 import com.vibra.wanderai.domain.model.TravelChatContext
 import com.vibra.wanderai.domain.model.TravelChatError
 import com.vibra.wanderai.domain.model.TravelChatException
+import com.vibra.wanderai.domain.model.Place
+import com.vibra.wanderai.domain.repository.NearbyPlacesRepository
 import com.vibra.wanderai.domain.repository.PlacesRepository
 import com.vibra.wanderai.domain.repository.TravelChatRepository
 import kotlinx.coroutines.CancellationException
@@ -14,16 +16,20 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.Normalizer
+import kotlin.math.roundToInt
 
 /**
  * Travel chat backed by Groq ([model], see [GroqProtocol.DEFAULT_MODEL]). Each request carries the
- * traveler's coordinates, the Plan filters and the place catalogue; the answer's
- * place ids are resolved against [placesRepository] so the UI gets real [com.vibra.wanderai.domain.model.Place]s
- * (with coordinates for the map).
+ * traveler's coordinates, the Plan filters, the curated catalogue and the real places around the
+ * traveler from Google Places Nearby Search ([nearbyPlaces]). The answer's place ids are resolved
+ * against that same list, so the UI gets real [Place]s with coordinates. If Nearby Search fails
+ * the chat keeps working with the curated catalogue only.
  */
 class GroqRecommendationRepository(
     private val apiKey: String,
     private val placesRepository: PlacesRepository,
+    private val nearbyPlaces: NearbyPlacesRepository? = null,
     private val model: String = GroqProtocol.DEFAULT_MODEL,
 ) : TravelChatRepository {
 
@@ -34,7 +40,7 @@ class GroqRecommendationRepository(
     ): Result<ChatReply> {
         if (apiKey.isBlank()) return Result.failure(TravelChatException(TravelChatError.MISSING_API_KEY))
         return try {
-            val catalogue = placesRepository.getPlaces()
+            val catalogue = catalogueFor(context)
             val body = GroqProtocol.requestBody(history, message, context, catalogue, model.ifBlank { GroqProtocol.DEFAULT_MODEL })
             val parsed = GroqProtocol.parseResponse(post(body))
                 ?: throw TravelChatException(TravelChatError.INVALID_RESPONSE)
@@ -50,6 +56,18 @@ class GroqRecommendationRepository(
             Log.w(TAG, "Groq chat network error", e)
             Result.failure(TravelChatException(TravelChatError.NETWORK, e))
         }
+    }
+
+    /** Curated places + Google nearby places (radius = Plan max distance), without duplicate names. */
+    private suspend fun catalogueFor(context: TravelChatContext): List<Place> {
+        val curated = placesRepository.getPlaces()
+        val radius = (context.filters.maxDistanceKm * 1_000).roundToInt().coerceAtLeast(MIN_NEARBY_RADIUS_M)
+        val nearby = nearbyPlaces?.nearby(context.location.point, radius, context.languageCode)
+            ?.onFailure { Log.w(TAG, "Nearby places unavailable, using the curated catalogue only", it) }
+            ?.getOrNull()
+            .orEmpty()
+        val curatedNames = curated.map { it.name.normalizedName() }.toSet()
+        return curated + nearby.filter { it.name.normalizedName() !in curatedNames }
     }
 
     private suspend fun post(body: String): String = withContext(Dispatchers.IO) {
@@ -89,5 +107,12 @@ class GroqRecommendationRepository(
         const val TAG = "GroqChat"
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 45_000
+        const val MIN_NEARBY_RADIUS_M = 500
     }
 }
+
+/** "Plaza de Nariño" and "plaza de narino" are the same place for de-duplication. */
+internal fun String.normalizedName(): String =
+    Normalizer.normalize(lowercase(), Normalizer.Form.NFD)
+        .replace(Regex("\\p{M}+"), "")
+        .filter(Char::isLetterOrDigit)
