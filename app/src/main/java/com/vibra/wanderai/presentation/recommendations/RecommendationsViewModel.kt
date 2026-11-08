@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.vibra.wanderai.domain.model.Itinerary
 import com.vibra.wanderai.domain.model.ItineraryFilters
 import com.vibra.wanderai.domain.model.ItineraryGenerationResult
+import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.PlaceCategory
 import com.vibra.wanderai.domain.model.TravelerLocation
 import com.vibra.wanderai.domain.repository.ItineraryRepository
@@ -120,10 +121,10 @@ class RecommendationsViewModel(
         form.update { it.copy(result = null) }
     }
 
-    /** Activates the generated route and asks the map to fly to [placeId]. */
-    fun showStopOnMap(placeId: String) {
+    /** Activates the generated route and asks the map to fly to [place]. */
+    fun showStopOnMap(place: Place) {
         activateResult()
-        planSession.focusPlace(placeId)
+        planSession.focusPlace(place)
     }
 
     private fun updateFilters(transform: (ItineraryFilters) -> ItineraryFilters) {
