@@ -163,7 +163,7 @@ fun RecommendationsScreen(
                 onShowOnMap()
             },
             onStopClick = { stop ->
-                viewModel.showStopOnMap(stop.place.id)
+                viewModel.showStopOnMap(stop.place)
                 onShowOnMap()
             },
         )
