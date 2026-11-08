@@ -44,6 +44,7 @@ import com.vibra.wanderai.domain.usecase.IdentifyLandmarkUseCase
 import com.vibra.wanderai.domain.usecase.NavigationGuidanceController
 import com.vibra.wanderai.domain.usecase.ObserveTravelerLocationUseCase
 import com.vibra.wanderai.domain.usecase.PlanSession
+import com.vibra.wanderai.domain.usecase.StartNavigationToPlaceUseCase
 import com.vibra.wanderai.domain.usecase.SyncItineraryToWatchUseCase
 import com.vibra.wanderai.domain.usecase.VibraLinkManager
 import kotlinx.coroutines.CoroutineScope
@@ -127,4 +128,9 @@ class AppContainer(context: Context) {
     /** BLE scan with automatic fallback to Wear OS Data Layer nodes. */
     val vibraLinkManager by lazy { VibraLinkManager(vibraRepository, wearDataLayerRepository, applicationScope) }
     val syncItineraryToWatch by lazy { SyncItineraryToWatchUseCase(vibraRepository, navigationGuidance) }
+
+    /** "Fijar rumbo": Routes API path + active route + first cue to Vibra. */
+    val startNavigationToPlace by lazy {
+        StartNavigationToPlaceUseCase(routesRepository, itineraryRepository, syncItineraryToWatch)
+    }
 }
