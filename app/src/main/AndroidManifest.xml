@@ -78,6 +78,22 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Receives actions from the Vibra watch (/vibra/user_action) even when WanderAI
+            is closed: the system starts this service only for that path.
+        -->
+        <service
+            android:name=".data.wear.WatchActionListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:host="*"
+                    android:path="/vibra/user_action"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
         <!-- Persists the per-app language chosen with AppCompatDelegate on API < 33 -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
