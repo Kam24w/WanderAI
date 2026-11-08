@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.vibra.wanderai.BuildConfig
 import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.VibraConnectionState
@@ -89,11 +91,15 @@ fun ExploreScreen(
     val viewModel = wanderViewModel {
         ExploreViewModel(
             it.placesRepository, it.itineraryRepository, it.vibraRepository,
-            it.syncItineraryToWatch, it.wearDataLayerRepository, it.observeTravelerLocation,
+            it.syncItineraryToWatch, it.wearDataLayerRepository, it.observeTravelerLocation, it.planSession,
         )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val viewport = rememberMapViewport()
+    val googleMap = rememberGoogleMapController()
+    // Google Maps SDK when MAPS_API_KEY is configured; offline canvas map otherwise.
+    val useGoogleMap = BuildConfig.HAS_MAPS_API_KEY
+    val mapController: ExploreMapController = if (useGoogleMap) googleMap else remember(viewport) { CanvasMapController(viewport) }
     val scope = rememberCoroutineScope()
 
     val locationPermission = rememberPermissionState(AppPermissions.location, requireAll = false)
@@ -106,6 +112,14 @@ fun ExploreScreen(
     }
     LaunchedEffect(locationPermission.isGranted) {
         if (locationPermission.isGranted) viewModel.refreshLocation()
+    }
+
+    // Recommendation tapped in the chat / itinerary: select it and fly there smoothly.
+    LaunchedEffect(state.focusRequest, state.places) {
+        val request = state.focusRequest ?: return@LaunchedEffect
+        val place = state.places.firstOrNull { it.id == request.placeId } ?: return@LaunchedEffect
+        viewModel.onFocusHandled(request)
+        mapController.flyTo(place.location)
     }
 
     val route = remember(state.activeItinerary, state.location.point) {
@@ -139,18 +153,40 @@ fun ExploreScreen(
         )
 
         Box(Modifier.fillMaxSize()) {
-            PastoMap(
-                viewport = viewport,
-                places = state.visiblePlaces,
-                highlightedPlaceIds = if (state.activeItinerary != null) state.recommendedIds else emptySet(),
-                route = route,
-                userLocation = state.location.point,
-                selectedPlaceId = state.selectedPlaceId,
-                onPlaceClick = { viewModel.selectPlace(it.id) },
-                onMapClick = { viewModel.selectPlace(null) },
-                mapDescription = stringResource(R.string.explore_map_description),
-                modifier = Modifier.fillMaxSize(),
-            )
+            val highlighted = if (state.activeItinerary != null) state.recommendedIds else emptySet()
+            if (useGoogleMap) {
+                WanderGoogleMap(
+                    controller = googleMap,
+                    places = state.visiblePlaces,
+                    highlightedPlaceIds = highlighted,
+                    route = route,
+                    userLocation = state.location.point,
+                    selectedPlaceId = state.selectedPlaceId,
+                    myLocationEnabled = locationPermission.isGranted,
+                    onPlaceClick = { place ->
+                        viewModel.selectPlace(place.id)
+                        scope.launch { mapController.flyTo(place.location) }
+                    },
+                    onMapClick = { viewModel.selectPlace(null) },
+                    mapDescription = stringResource(R.string.explore_map_description),
+                    // Keeps the focused marker above the floating cards.
+                    contentPadding = PaddingValues(bottom = 220.dp),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                PastoMap(
+                    viewport = viewport,
+                    places = state.visiblePlaces,
+                    highlightedPlaceIds = highlighted,
+                    route = route,
+                    userLocation = state.location.point,
+                    selectedPlaceId = state.selectedPlaceId,
+                    onPlaceClick = { viewModel.selectPlace(it.id) },
+                    onMapClick = { viewModel.selectPlace(null) },
+                    mapDescription = stringResource(R.string.explore_map_description),
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
 
             // Floating controls (right).
             Column(
@@ -161,10 +197,10 @@ fun ExploreScreen(
             ) {
                 MapFab(Icons.Outlined.MyLocation, stringResource(R.string.explore_my_location)) {
                     if (!locationPermission.isGranted) locationPermission.request()
-                    scope.launch { viewport.animateTo(state.location.point, targetScale = 1.6f) }
+                    scope.launch { mapController.flyTo(state.location.point) }
                 }
-                MapFab(Icons.Outlined.Add, stringResource(R.string.explore_zoom_in)) { viewport.zoomBy(1.4f) }
-                MapFab(Icons.Outlined.Remove, stringResource(R.string.explore_zoom_out)) { viewport.zoomBy(1 / 1.4f) }
+                MapFab(Icons.Outlined.Add, stringResource(R.string.explore_zoom_in)) { scope.launch { mapController.zoomIn() } }
+                MapFab(Icons.Outlined.Remove, stringResource(R.string.explore_zoom_out)) { scope.launch { mapController.zoomOut() } }
             }
 
             // GPS + recommended filter (top-left).
