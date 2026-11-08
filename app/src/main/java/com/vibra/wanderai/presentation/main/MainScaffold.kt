@@ -49,6 +49,7 @@ import androidx.navigation.compose.rememberNavController
 import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.repository.VibraRepository
+import com.vibra.wanderai.presentation.chat.TravelChatScreen
 import com.vibra.wanderai.presentation.common.wanderViewModel
 import com.vibra.wanderai.presentation.explore.ExploreScreen
 import com.vibra.wanderai.presentation.profile.ProfileScreen
@@ -69,6 +70,7 @@ object MainRoutes {
     const val VIBRA = "vibra"
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
+    const val CHAT = "chat"
 }
 
 private data class Tab(
@@ -100,7 +102,7 @@ fun MainScaffold() {
     val watchConnected by viewModel.isWatchConnected.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    val showBottomBar = currentDestination?.route != MainRoutes.SETTINGS
+    val showBottomBar = currentDestination?.route != MainRoutes.SETTINGS && currentDestination?.route != MainRoutes.CHAT
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -124,6 +126,13 @@ fun MainScaffold() {
                 RecommendationsScreen(
                     onSettingsClick = { navController.navigate(MainRoutes.SETTINGS) },
                     onShowOnMap = { navController.navigateToTab(MainRoutes.EXPLORE) },
+                    onOpenChat = { navController.navigate(MainRoutes.CHAT) },
+                )
+            }
+            composable(MainRoutes.CHAT) {
+                TravelChatScreen(
+                    onBack = { navController.popBackStack() },
+                    onShowPlaceOnMap = { navController.navigateToTab(MainRoutes.EXPLORE) },
                 )
             }
             composable(MainRoutes.EXPLORE) {
