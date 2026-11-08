@@ -10,6 +10,24 @@ data class ChatMessage(
     val recommendations: List<Place> = emptyList(),
 )
 
+/** A saved conversation of the travel chat (`chat_history` table). */
+data class ChatConversation(
+    val id: String,
+    val title: String,
+    val messages: List<ChatMessage>,
+    val createdAtMillis: Long,
+) {
+    companion object {
+        const val TITLE_MAX = 60
+
+        /** Title from the first question: "Recomiéndame un lugar tradicional para cenar…". */
+        fun titleFor(firstMessage: String): String {
+            val clean = firstMessage.trim().replace(Regex("\\s+"), " ")
+            return if (clean.length <= TITLE_MAX) clean else clean.take(TITLE_MAX - 1).trimEnd() + "…"
+        }
+    }
+}
+
 /** What the AI sees besides the conversation: where the traveler is and their current filters. */
 data class TravelChatContext(
     val location: TravelerLocation,
