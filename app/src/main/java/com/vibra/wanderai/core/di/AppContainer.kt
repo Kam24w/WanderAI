@@ -23,6 +23,7 @@ import com.vibra.wanderai.data.wear.PhoneGuidanceAnnouncer
 import com.vibra.wanderai.data.wear.ResourceGuidanceTextProvider
 import com.vibra.wanderai.data.wear.LocalDevBridge
 import com.vibra.wanderai.data.wear.WearableDataLayerRepository
+import com.vibra.wanderai.domain.model.WatchSyncStatus
 import com.vibra.wanderai.domain.repository.AchievementsRepository
 import com.vibra.wanderai.domain.repository.AuthRepository
 import com.vibra.wanderai.domain.repository.ChatHistoryRepository
@@ -109,6 +110,11 @@ class AppContainer(context: Context) {
             hapticIntensity = vibraRepository.hapticIntensity,
             text = ResourceGuidanceTextProvider(appContext),
             announcer = PhoneGuidanceAnnouncer(appContext),
+            // STOP_NAVIGATION from the watch: same as "Quitar ruta" on the map.
+            stopRoute = {
+                itineraryRepository.setActive(null)
+                vibraRepository.updateSyncStatus(WatchSyncStatus.Idle)
+            },
         )
     }
 
