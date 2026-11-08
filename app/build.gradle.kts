@@ -44,6 +44,8 @@ android {
         val mapsApiKey = localProperties.getProperty("MAPS_API_KEY", "")
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("boolean", "HAS_MAPS_API_KEY", mapsApiKey.isNotBlank().toString())
+        // Misma clave para Routes API y Places API (New) (cabeceras X-Android-Package/Cert).
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
 
         // Groq (chat de viaje con IA).
         buildConfigField(
