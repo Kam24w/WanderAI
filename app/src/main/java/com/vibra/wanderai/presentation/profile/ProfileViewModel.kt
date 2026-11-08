@@ -9,6 +9,7 @@ import com.vibra.wanderai.domain.model.TravelerStats
 import com.vibra.wanderai.domain.repository.AuthRepository
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.TravelerRepository
+import com.vibra.wanderai.domain.usecase.DeleteAccountUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,14 +25,22 @@ data class ProfileUiState(
     val savedItineraries: List<Itinerary> = emptyList(),
     val isSavingName: Boolean = false,
     val nameUpdateFailed: Boolean = false,
+    val isDeletingAccount: Boolean = false,
+    val accountDeletionFailed: Boolean = false,
 )
 
-private data class EditState(val isSaving: Boolean = false, val failed: Boolean = false)
+private data class EditState(
+    val isSaving: Boolean = false,
+    val failed: Boolean = false,
+    val isDeleting: Boolean = false,
+    val deleteFailed: Boolean = false,
+)
 
 class ProfileViewModel(
     private val authRepository: AuthRepository,
     travelerRepository: TravelerRepository,
     private val itineraryRepository: ItineraryRepository,
+    private val deleteAccount: DeleteAccountUseCase,
 ) : ViewModel() {
 
     private val edit = MutableStateFlow(EditState())
@@ -42,7 +51,7 @@ class ProfileViewModel(
         itineraryRepository.savedItineraries,
         edit,
     ) { user, stats, saved, editState ->
-        ProfileUiState(user, stats, saved, editState.isSaving, editState.failed)
+        ProfileUiState(user, stats, saved, editState.isSaving, editState.failed, editState.isDeleting, editState.deleteFailed)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState())
 
     fun openItinerary(itinerary: Itinerary) = itineraryRepository.setActive(itinerary)
@@ -54,13 +63,25 @@ class ProfileViewModel(
     fun updateDisplayName(name: String, onDone: () -> Unit) {
         val trimmed = name.trim()
         if (trimmed.isEmpty()) return
-        edit.value = EditState(isSaving = true)
+        edit.update { it.copy(isSaving = true, failed = false) }
         viewModelScope.launch {
             val result = authRepository.updateDisplayName(trimmed)
-            edit.update { EditState(isSaving = false, failed = result.isFailure) }
+            edit.update { it.copy(isSaving = false, failed = result.isFailure) }
             if (result.isSuccess) onDone()
         }
     }
 
     fun clearNameError() = edit.update { it.copy(failed = false) }
+
+    /** GDPR: on success the session ends and the root navigates back to Login. */
+    fun deleteAccountAndData() {
+        if (edit.value.isDeleting) return
+        edit.update { it.copy(isDeleting = true, deleteFailed = false) }
+        viewModelScope.launch {
+            val result = deleteAccount()
+            edit.update { it.copy(isDeleting = false, deleteFailed = result.isFailure) }
+        }
+    }
+
+    fun clearDeleteError() = edit.update { it.copy(deleteFailed = false) }
 }
