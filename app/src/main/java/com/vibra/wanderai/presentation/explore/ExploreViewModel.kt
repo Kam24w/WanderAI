@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.Itinerary
 import com.vibra.wanderai.domain.model.Place
+import com.vibra.wanderai.domain.model.PlaceSource
 import com.vibra.wanderai.domain.model.TravelerLocation
 import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.model.WatchSyncStatus
@@ -15,6 +16,7 @@ import com.vibra.wanderai.domain.repository.WearDataLayerRepository
 import com.vibra.wanderai.domain.usecase.MapFocusRequest
 import com.vibra.wanderai.domain.usecase.ObserveTravelerLocationUseCase
 import com.vibra.wanderai.domain.usecase.PlanSession
+import com.vibra.wanderai.domain.usecase.StartNavigationToPlaceUseCase
 import com.vibra.wanderai.domain.usecase.SyncItineraryToWatchUseCase
 import com.vibra.wanderai.presentation.common.LocationAwareViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,19 +43,38 @@ data class ExploreUiState(
     /** A Vibra watch is reachable through the Wear OS Data Layer. */
     val wearConnected: Boolean = false,
     val selectedPlaceId: String? = null,
-    val showOnlyRecommended: Boolean = false,
+    /** "Pines recomendados IA" chip: also shows the top-rated catalogue places. */
+    val showRecommended: Boolean = false,
+    /** Places opened from the AI chat or a generated itinerary (kept on the map). */
+    val pinnedPlaceIds: Set<String> = emptySet(),
     /** A recommendation tapped in the AI chat or in a generated itinerary, not yet shown. */
     val focusRequest: MapFocusRequest? = null,
     /** Walking path of the active route (real streets when [RoutePath.followsStreets]). */
     val routePath: RoutePath = RoutePath.NONE,
+    val course: CourseState = CourseState.Idle,
+    /** The camera should frame the new course once its path is drawn. */
+    val pendingRouteFit: Boolean = false,
 ) {
-    /** Itinerary stops when a route is active; otherwise the top-rated places. */
-    val recommendedIds: Set<String>
-        get() = activeItinerary?.stops?.map { it.place.id }?.toSet()
-            ?: places.filter { it.rating >= RECOMMENDED_RATING }.map(Place::id).toSet()
+    /** Stops of the active route: the other markers are dimmed while it is shown. */
+    val routePlaceIds: Set<String> get() = activeItinerary?.stops?.map { it.place.id }?.toSet().orEmpty()
 
+    val topRatedIds: Set<String>
+        get() = places.filter { it.source == PlaceSource.CATALOGUE && it.rating >= RECOMMENDED_RATING }.map(Place::id).toSet()
+
+    /**
+     * The map starts clean (only the traveler). Markers appear for the active route,
+     * places opened from the chat / itinerary, the selected place, and the catalogue
+     * highlights when the traveler turns the filter on.
+     */
     val visiblePlaces: List<Place>
-        get() = if (showOnlyRecommended) places.filter { it.id in recommendedIds } else places
+        get() {
+            val ids = routePlaceIds + pinnedPlaceIds + listOfNotNull(selectedPlaceId) +
+                (if (showRecommended) topRatedIds else emptySet())
+            return places.filter { it.id in ids }
+        }
+
+    /** The active route is the course set towards [placeId]. */
+    fun isCourseTo(placeId: String): Boolean = activeItinerary?.stops?.singleOrNull()?.place?.id == placeId
 
     val selectedPlace: Place? get() = places.firstOrNull { it.id == selectedPlaceId }
 
@@ -67,10 +88,20 @@ data class ExploreUiState(
 
 private data class ExploreLocalState(
     val selectedPlaceId: String? = null,
-    val showOnlyRecommended: Boolean = false,
-    /** Google Places results opened from the chat: shown as extra markers. */
+    val showRecommended: Boolean = false,
+    val pinnedPlaceIds: Set<String> = emptySet(),
+    /** Google Places results opened from the chat: not in the catalogue, so kept here. */
     val externalPlaces: List<Place> = emptyList(),
+    val course: CourseState = CourseState.Idle,
+    val pendingRouteFit: Boolean = false,
 )
+
+/** Progress of "Fijar rumbo" for the selected place. */
+sealed interface CourseState {
+    data object Idle : CourseState
+    data class Starting(val placeId: String) : CourseState
+    data class Started(val placeId: String, val followsStreets: Boolean, val watchSynced: Boolean) : CourseState
+}
 
 /** Polyline of the active route. Straight segments until the Routes API answers (or if it fails). */
 data class RoutePath(val points: List<GeoPoint>, val followsStreets: Boolean) {
@@ -91,6 +122,7 @@ class ExploreViewModel(
     observeTravelerLocation: ObserveTravelerLocationUseCase,
     private val planSession: PlanSession,
     private val routesRepository: RoutesRepository,
+    private val startNavigationToPlace: StartNavigationToPlaceUseCase,
 ) : LocationAwareViewModel(observeTravelerLocation) {
 
     private val local = MutableStateFlow(ExploreLocalState())
@@ -127,24 +159,48 @@ class ExploreViewModel(
             syncStatus = sync,
             wearConnected = watches.isNotEmpty(),
             selectedPlaceId = ui.selectedPlaceId,
-            showOnlyRecommended = ui.showOnlyRecommended,
+            showRecommended = ui.showRecommended,
+            pinnedPlaceIds = ui.pinnedPlaceIds,
             focusRequest = focus,
             routePath = path,
+            course = ui.course,
+            pendingRouteFit = ui.pendingRouteFit,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
 
     fun selectPlace(placeId: String?) = local.update { it.copy(selectedPlaceId = placeId) }
 
-    fun toggleRecommended() = local.update { it.copy(showOnlyRecommended = !it.showOnlyRecommended) }
+    fun toggleRecommended() = local.update { it.copy(showRecommended = !it.showRecommended) }
+
+    /**
+     * "Fijar rumbo": street route from the traveler to [place], active navigation
+     * session and first cue + vibration sent to Vibra.
+     */
+    fun setCourse(place: Place) {
+        if (local.value.course is CourseState.Starting) return
+        local.update {
+            it.copy(course = CourseState.Starting(place.id), pinnedPlaceIds = it.pinnedPlaceIds + place.id)
+        }
+        viewModelScope.launch {
+            val result = startNavigationToPlace(place, state.value.location.point)
+            local.update {
+                it.copy(
+                    course = CourseState.Started(place.id, result.followsStreets, result.watchSynced),
+                    pendingRouteFit = true,
+                )
+            }
+        }
+    }
+
+    fun onRouteFitted() = local.update { it.copy(pendingRouteFit = false) }
 
     /** Selects the requested place (making sure its marker is visible) and marks the request done. */
     fun onFocusHandled(request: MapFocusRequest) {
-        val recommended = state.value.recommendedIds
         val known = state.value.places.any { it.id == request.placeId }
         local.update {
             it.copy(
                 selectedPlaceId = request.placeId,
-                showOnlyRecommended = it.showOnlyRecommended && request.placeId in recommended,
+                pinnedPlaceIds = it.pinnedPlaceIds + request.placeId,
                 externalPlaces = if (known) it.externalPlaces else (it.externalPlaces + request.place).takeLast(MAX_EXTERNAL),
             )
         }
@@ -158,6 +214,7 @@ class ExploreViewModel(
     }
 
     fun clearRoute() {
+        local.update { it.copy(course = CourseState.Idle, pendingRouteFit = false) }
         itineraryRepository.setActive(null)
         vibraRepository.updateSyncStatus(WatchSyncStatus.Idle)
     }
