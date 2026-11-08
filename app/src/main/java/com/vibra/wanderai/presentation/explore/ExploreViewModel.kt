@@ -10,7 +10,9 @@ import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.PlacesRepository
 import com.vibra.wanderai.domain.repository.VibraRepository
 import com.vibra.wanderai.domain.repository.WearDataLayerRepository
+import com.vibra.wanderai.domain.usecase.MapFocusRequest
 import com.vibra.wanderai.domain.usecase.ObserveTravelerLocationUseCase
+import com.vibra.wanderai.domain.usecase.PlanSession
 import com.vibra.wanderai.domain.usecase.SyncItineraryToWatchUseCase
 import com.vibra.wanderai.presentation.common.LocationAwareViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,8 @@ data class ExploreUiState(
     val wearConnected: Boolean = false,
     val selectedPlaceId: String? = null,
     val showOnlyRecommended: Boolean = false,
+    /** A recommendation tapped in the AI chat or in a generated itinerary, not yet shown. */
+    val focusRequest: MapFocusRequest? = null,
 ) {
     /** Itinerary stops when a route is active; otherwise the top-rated places. */
     val recommendedIds: Set<String>
@@ -63,6 +67,7 @@ class ExploreViewModel(
     private val syncItineraryToWatch: SyncItineraryToWatchUseCase,
     wearRepository: WearDataLayerRepository,
     observeTravelerLocation: ObserveTravelerLocationUseCase,
+    private val planSession: PlanSession,
 ) : LocationAwareViewModel(observeTravelerLocation) {
 
     private val local = MutableStateFlow(ExploreLocalState())
@@ -71,8 +76,8 @@ class ExploreViewModel(
     val state: StateFlow<ExploreUiState> = combine(
         combine(places, itineraryRepository.activeItinerary, location, ::Triple),
         combine(vibraRepository.connectionState, vibraRepository.syncStatus, wearRepository.connectedWatches, ::Triple),
-        local,
-    ) { (placeList, itinerary, loc), (connection, sync, watches), ui ->
+        combine(local, planSession.mapFocus, ::Pair),
+    ) { (placeList, itinerary, loc), (connection, sync, watches), (ui, focus) ->
         ExploreUiState(
             places = placeList,
             activeItinerary = itinerary,
@@ -82,12 +87,25 @@ class ExploreViewModel(
             wearConnected = watches.isNotEmpty(),
             selectedPlaceId = ui.selectedPlaceId,
             showOnlyRecommended = ui.showOnlyRecommended,
+            focusRequest = focus,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
 
     fun selectPlace(placeId: String?) = local.update { it.copy(selectedPlaceId = placeId) }
 
     fun toggleRecommended() = local.update { it.copy(showOnlyRecommended = !it.showOnlyRecommended) }
+
+    /** Selects the requested place (making sure its marker is visible) and marks the request done. */
+    fun onFocusHandled(request: MapFocusRequest) {
+        val recommended = state.value.recommendedIds
+        local.update {
+            it.copy(
+                selectedPlaceId = request.placeId,
+                showOnlyRecommended = it.showOnlyRecommended && request.placeId in recommended,
+            )
+        }
+        planSession.consumeFocus(request)
+    }
 
     fun clearRoute() {
         itineraryRepository.setActive(null)
