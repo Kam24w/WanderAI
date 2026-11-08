@@ -9,7 +9,9 @@ import com.vibra.wanderai.domain.model.TravelerStats
 import com.vibra.wanderai.domain.repository.AuthRepository
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.TravelerRepository
+import com.vibra.wanderai.domain.usecase.CredentialValidator
 import com.vibra.wanderai.domain.usecase.DeleteAccountUseCase
+import com.vibra.wanderai.domain.usecase.NameIssue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +27,8 @@ data class ProfileUiState(
     val savedItineraries: List<Itinerary> = emptyList(),
     val isSavingName: Boolean = false,
     val nameUpdateFailed: Boolean = false,
+    /** Local validation of the edited name (2–50 letters). */
+    val nameIssue: NameIssue? = null,
     val isDeletingAccount: Boolean = false,
     val accountDeletionFailed: Boolean = false,
 )
@@ -32,6 +36,7 @@ data class ProfileUiState(
 private data class EditState(
     val isSaving: Boolean = false,
     val failed: Boolean = false,
+    val nameIssue: NameIssue? = null,
     val isDeleting: Boolean = false,
     val deleteFailed: Boolean = false,
 )
@@ -51,7 +56,10 @@ class ProfileViewModel(
         itineraryRepository.savedItineraries,
         edit,
     ) { user, stats, saved, editState ->
-        ProfileUiState(user, stats, saved, editState.isSaving, editState.failed, editState.isDeleting, editState.deleteFailed)
+        ProfileUiState(
+            user, stats, saved, editState.isSaving, editState.failed, editState.nameIssue,
+            editState.isDeleting, editState.deleteFailed,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProfileUiState())
 
     fun openItinerary(itinerary: Itinerary) = itineraryRepository.setActive(itinerary)
@@ -62,8 +70,12 @@ class ProfileViewModel(
 
     fun updateDisplayName(name: String, onDone: () -> Unit) {
         val trimmed = name.trim()
-        if (trimmed.isEmpty()) return
-        edit.update { it.copy(isSaving = true, failed = false) }
+        val issue = CredentialValidator.validateName(trimmed)
+        if (issue != null) {
+            edit.update { it.copy(nameIssue = issue, failed = false) }
+            return
+        }
+        edit.update { it.copy(isSaving = true, failed = false, nameIssue = null) }
         viewModelScope.launch {
             val result = authRepository.updateDisplayName(trimmed)
             edit.update { it.copy(isSaving = false, failed = result.isFailure) }
@@ -71,7 +83,7 @@ class ProfileViewModel(
         }
     }
 
-    fun clearNameError() = edit.update { it.copy(failed = false) }
+    fun clearNameError() = edit.update { it.copy(failed = false, nameIssue = null) }
 
     /** GDPR: on success the session ends and the root navigates back to Login. */
     fun deleteAccountAndData() {
