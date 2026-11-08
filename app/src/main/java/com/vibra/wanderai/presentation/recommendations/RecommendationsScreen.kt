@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,10 +23,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.outlined.AttachMoney
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BookmarkAdded
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Map
 import androidx.compose.material.icons.outlined.NearMe
@@ -41,6 +44,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +72,7 @@ import com.vibra.wanderai.presentation.common.formatDistance
 import com.vibra.wanderai.presentation.common.formatDuration
 import com.vibra.wanderai.presentation.common.icon
 import com.vibra.wanderai.presentation.common.itineraryTitleRes
+import com.vibra.wanderai.presentation.common.NumberInput
 import com.vibra.wanderai.presentation.common.labelRes
 import com.vibra.wanderai.presentation.common.walkingLabel
 import com.vibra.wanderai.presentation.common.wanderViewModel
@@ -75,15 +82,15 @@ import com.vibra.wanderai.presentation.components.StatusPill
 import com.vibra.wanderai.presentation.components.WanderSlider
 import com.vibra.wanderai.presentation.components.WanderTopBar
 import com.vibra.wanderai.ui.theme.WanderTheme
-import java.util.Locale
 
 @Composable
 fun RecommendationsScreen(
     onSettingsClick: () -> Unit,
     onShowOnMap: () -> Unit,
+    onOpenChat: () -> Unit,
 ) {
     val viewModel = wanderViewModel {
-        RecommendationsViewModel(it.generateItinerary, it.itineraryRepository, it.observeTravelerLocation)
+        RecommendationsViewModel(it.generateItinerary, it.itineraryRepository, it.observeTravelerLocation, it.planSession)
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -94,6 +101,9 @@ fun RecommendationsScreen(
     ) {
         WanderTopBar(
             actions = {
+                IconButton(onClick = onOpenChat) {
+                    Icon(Icons.AutoMirrored.Outlined.Chat, contentDescription = stringResource(R.string.reco_open_chat))
+                }
                 IconButton(onClick = onSettingsClick) {
                     Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings_title))
                 }
@@ -109,8 +119,8 @@ fun RecommendationsScreen(
         ) {
             Header(isLiveLocation = state.location.isLive)
             TimeCard(state.filters.availableMinutes, viewModel::onTimeChange)
-            BudgetCard(state.filters.budgetCop, viewModel::onBudgetChange)
-            DistanceCard(state.filters.maxDistanceKm, viewModel::onDistanceChange)
+            BudgetCard(state.filters.budgetCop, viewModel::onBudgetChange, viewModel::setExactBudget)
+            DistanceCard(state.filters.maxDistanceKm, viewModel::onDistanceChange, viewModel::setExactDistance)
             CategoryCard(state.filters.categories, viewModel::toggleCategory)
 
             AnimatedVisibility(visible = state.noMatches) {
@@ -127,6 +137,17 @@ fun RecommendationsScreen(
                 loading = state.isGenerating,
                 onClick = viewModel::generate,
             )
+            OutlinedButton(
+                onClick = onOpenChat,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+            ) {
+                Icon(Icons.AutoMirrored.Outlined.Chat, contentDescription = null, tint = WanderTheme.colors.brandTeal)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.reco_open_chat), fontWeight = FontWeight.Bold)
+            }
             Spacer(Modifier.height(6.dp))
         }
     }
@@ -139,6 +160,10 @@ fun RecommendationsScreen(
             onSave = viewModel::saveResult,
             onShowOnMap = {
                 viewModel.activateResult()
+                onShowOnMap()
+            },
+            onStopClick = { stop ->
+                viewModel.showStopOnMap(stop.place.id)
                 onShowOnMap()
             },
         )
@@ -199,14 +224,15 @@ private fun TimeCard(minutes: Int, onChange: (Float) -> Unit) {
 }
 
 @Composable
-private fun BudgetCard(budget: Int, onChange: (Float) -> Unit) {
+private fun BudgetCard(budget: Int, onChange: (Float) -> Unit, onExact: (Int) -> Unit) {
     val range = ItineraryFilters.BUDGET_RANGE_COP
+    var editing by rememberSaveable { mutableStateOf(false) }
     SectionCard(
         title = stringResource(R.string.reco_budget),
         icon = Icons.Outlined.AttachMoney,
         iconTint = WanderTheme.colors.brandGold,
     ) {
-        BigValue(formatCop(budget))
+        BigValue(formatCop(budget), onClick = { editing = true })
         WanderSlider(
             value = budget.toFloat(),
             onValueChange = onChange,
@@ -218,18 +244,37 @@ private fun BudgetCard(budget: Int, onChange: (Float) -> Unit) {
             accent = MaterialTheme.colorScheme.primary,
         )
     }
+    if (editing) {
+        ExactValueDialog(
+            title = stringResource(R.string.reco_edit_budget_title),
+            initialText = budget.toString(),
+            suffix = "COP",
+            decimal = false,
+            rangeLabelStart = formatCop(range.first),
+            rangeLabelEnd = formatCop(range.last),
+            sanitize = NumberInput::sanitizeCop,
+            parse = NumberInput::parseCop,
+            isInRange = { it in range },
+            onConfirm = {
+                onExact(it)
+                editing = false
+            },
+            onDismiss = { editing = false },
+        )
+    }
 }
 
 @Composable
-private fun DistanceCard(km: Float, onChange: (Float) -> Unit) {
+private fun DistanceCard(km: Float, onChange: (Float) -> Unit, onExact: (Float) -> Unit) {
     val range = ItineraryFilters.DISTANCE_RANGE_KM
-    val label = String.format(Locale.US, "%.1f km", km)
+    val label = NumberInput.formatKm(km)
+    var editing by rememberSaveable { mutableStateOf(false) }
     SectionCard(
         title = stringResource(R.string.reco_distance),
         icon = Icons.Outlined.NearMe,
         iconTint = WanderTheme.colors.accentWarm,
     ) {
-        BigValue(label)
+        BigValue(label, onClick = { editing = true })
         WanderSlider(
             value = km,
             onValueChange = onChange,
@@ -239,6 +284,24 @@ private fun DistanceCard(km: Float, onChange: (Float) -> Unit) {
             accessibilityLabel = stringResource(R.string.reco_distance),
             valueDescription = label,
             accent = WanderTheme.colors.accentWarm,
+        )
+    }
+    if (editing) {
+        ExactValueDialog(
+            title = stringResource(R.string.reco_edit_distance_title),
+            initialText = NumberInput.editableKm(km),
+            suffix = "km",
+            decimal = true,
+            rangeLabelStart = NumberInput.formatKm(range.start),
+            rangeLabelEnd = NumberInput.formatKm(range.endInclusive),
+            sanitize = NumberInput::sanitizeKm,
+            parse = NumberInput::parseKm,
+            isInRange = { it in range },
+            onConfirm = {
+                onExact(it)
+                editing = false
+            },
+            onDismiss = { editing = false },
         )
     }
 }
@@ -309,15 +372,39 @@ private fun CategoryTile(
     }
 }
 
+/** Big figure of a card. With [onClick] it becomes tappable to type the exact value. */
 @Composable
-private fun BigValue(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.ExtraBold,
-        color = MaterialTheme.colorScheme.onSurface,
-        letterSpacing = (-0.5).sp,
-    )
+private fun BigValue(text: String, onClick: (() -> Unit)? = null) {
+    val modifier = if (onClick != null) {
+        Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(
+                onClickLabel = stringResource(R.string.reco_edit_action),
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .padding(end = 4.dp)
+    } else {
+        Modifier
+    }
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            letterSpacing = (-0.5).sp,
+        )
+        if (onClick != null) {
+            Spacer(Modifier.width(6.dp))
+            Icon(
+                Icons.Outlined.Edit,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+    }
 }
 
 @Composable
@@ -346,6 +433,7 @@ private fun ItineraryResultSheet(
     onDismiss: () -> Unit,
     onSave: () -> Unit,
     onShowOnMap: () -> Unit,
+    onStopClick: (ItineraryStop) -> Unit,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -384,7 +472,12 @@ private fun ItineraryResultSheet(
             Spacer(Modifier.height(18.dp))
 
             itinerary.stops.forEachIndexed { index, stop ->
-                StopRow(index = index, stop = stop, isLast = index == itinerary.stops.lastIndex)
+                StopRow(
+                    index = index,
+                    stop = stop,
+                    isLast = index == itinerary.stops.lastIndex,
+                    onClick = { onStopClick(stop) },
+                )
             }
 
             Spacer(Modifier.height(18.dp))
@@ -432,9 +525,14 @@ private fun SummaryChip(icon: ImageVector, text: String, modifier: Modifier = Mo
 }
 
 @Composable
-private fun StopRow(index: Int, stop: ItineraryStop, isLast: Boolean) {
+private fun StopRow(index: Int, stop: ItineraryStop, isLast: Boolean, onClick: () -> Unit) {
     val categoryColor = stop.place.category.color()
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClickLabel = stringResource(R.string.chat_show_on_map), onClick = onClick),
+    ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Box(
                 modifier = Modifier
