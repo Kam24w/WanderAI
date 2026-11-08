@@ -4,6 +4,7 @@ import com.vibra.wanderai.domain.model.AchievementType
 import com.vibra.wanderai.domain.model.ActiveRouteState
 import com.vibra.wanderai.domain.model.AppLanguage
 import com.vibra.wanderai.domain.model.AuthState
+import com.vibra.wanderai.domain.model.ChatConversation
 import com.vibra.wanderai.domain.model.ChatMessage
 import com.vibra.wanderai.domain.model.ChatReply
 import com.vibra.wanderai.domain.model.GeoPoint
@@ -91,6 +92,28 @@ interface AchievementsRepository {
     /** Records [types] as unlocked now; already unlocked ones are ignored. */
     suspend fun unlock(types: Set<AchievementType>): Result<Unit>
     fun clearLocal()
+}
+
+/** Per-user saved conversations of the travel chat (`chat_history`). */
+interface ChatHistoryRepository {
+    /** Conversations of the signed-in user, most recent first. */
+    suspend fun list(): Result<List<ChatConversation>>
+
+    /** Inserts or replaces [conversation] (same id). */
+    suspend fun save(conversation: ChatConversation): Result<Unit>
+    suspend fun delete(conversationId: String): Result<Unit>
+    suspend fun deleteAll(): Result<Unit>
+}
+
+/** Real places around a point (Google Places API New, Nearby Search). */
+interface NearbyPlacesRepository {
+    suspend fun nearby(center: GeoPoint, radiusMeters: Int, languageCode: String): Result<List<Place>>
+}
+
+/** Walking path along real streets (Google Routes API). */
+interface RoutesRepository {
+    /** Path that visits [waypoints] in order; the first is the origin, the last the destination. */
+    suspend fun walkingPath(waypoints: List<GeoPoint>): Result<List<GeoPoint>>
 }
 
 /** Conversational travel assistant (Groq) that recommends places from the catalogue. */
