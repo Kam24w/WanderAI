@@ -23,19 +23,23 @@ class SyncItineraryToWatchUseCase(
     private val vibraRepository: VibraRepository,
     private val guidance: NavigationGuidanceController,
 ) {
-    suspend operator fun invoke(itinerary: Itinerary, origin: GeoPoint): Result<Unit> {
+    /**
+     * [firstCue] overrides the estimated first instruction, e.g. with the first real
+     * turn of a Routes API path ("Fijar rumbo").
+     */
+    suspend operator fun invoke(itinerary: Itinerary, origin: GeoPoint, firstCue: HapticCommand? = null): Result<Unit> {
         val first = itinerary.stops.firstOrNull()
             ?: return Result.failure(IllegalArgumentException("Empty itinerary"))
 
-        val firstCue = firstInstruction(itinerary, origin)
+        val cue = firstCue ?: firstInstruction(itinerary, origin)
         val bleConnected = vibraRepository.connectionState.value is VibraConnectionState.Connected
 
         vibraRepository.updateSyncStatus(WatchSyncStatus.Sending)
-        val wearDelivered = guidance.startRoute(firstCue).isSuccess
+        val wearDelivered = guidance.startRoute(cue).isSuccess
         val bleResult = if (bleConnected) {
             vibraRepository
                 .send(HapticCommand.ItinerarySync(itinerary.stops.size, first.distanceMeters))
-                .mapCatching { vibraRepository.send(firstCue).getOrThrow() }
+                .mapCatching { vibraRepository.send(cue).getOrThrow() }
         } else {
             Result.failure(IllegalStateException("Vibra not connected over BLE"))
         }
