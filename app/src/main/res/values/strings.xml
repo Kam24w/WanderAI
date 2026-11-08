@@ -306,4 +306,11 @@
     </plurals>
     <string name="chat_place_nearby">Cerca de ti</string>
     <string name="chat_cost_estimated">aprox.</string>
+    <!-- Fijar rumbo (Explorar) -->
+    <string name="explore_set_course">Fijar rumbo</string>
+    <string name="explore_course_resend">Reenviar rumbo</string>
+    <string name="explore_course_starting">Calculando ruta…</string>
+    <string name="explore_course_synced">Rumbo fijado: instrucciones enviadas a tu Vibra</string>
+    <string name="explore_course_no_watch">Rumbo fijado. Conecta tu Vibra para recibir las vibraciones</string>
+    <string name="explore_course_straight">No se encontró ruta por calles: se muestra en línea recta</string>
 </resources>
