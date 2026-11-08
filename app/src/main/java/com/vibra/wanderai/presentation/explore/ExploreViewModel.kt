@@ -1,6 +1,7 @@
 package com.vibra.wanderai.presentation.explore
 
 import androidx.lifecycle.viewModelScope
+import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.Itinerary
 import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.TravelerLocation
@@ -8,6 +9,7 @@ import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.model.WatchSyncStatus
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.PlacesRepository
+import com.vibra.wanderai.domain.repository.RoutesRepository
 import com.vibra.wanderai.domain.repository.VibraRepository
 import com.vibra.wanderai.domain.repository.WearDataLayerRepository
 import com.vibra.wanderai.domain.usecase.MapFocusRequest
@@ -15,7 +17,12 @@ import com.vibra.wanderai.domain.usecase.ObserveTravelerLocationUseCase
 import com.vibra.wanderai.domain.usecase.PlanSession
 import com.vibra.wanderai.domain.usecase.SyncItineraryToWatchUseCase
 import com.vibra.wanderai.presentation.common.LocationAwareViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,6 +30,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 data class ExploreUiState(
     val places: List<Place> = emptyList(),
@@ -36,6 +44,8 @@ data class ExploreUiState(
     val showOnlyRecommended: Boolean = false,
     /** A recommendation tapped in the AI chat or in a generated itinerary, not yet shown. */
     val focusRequest: MapFocusRequest? = null,
+    /** Walking path of the active route (real streets when [RoutePath.followsStreets]). */
+    val routePath: RoutePath = RoutePath.NONE,
 ) {
     /** Itinerary stops when a route is active; otherwise the top-rated places. */
     val recommendedIds: Set<String>
@@ -58,7 +68,19 @@ data class ExploreUiState(
 private data class ExploreLocalState(
     val selectedPlaceId: String? = null,
     val showOnlyRecommended: Boolean = false,
+    /** Google Places results opened from the chat: shown as extra markers. */
+    val externalPlaces: List<Place> = emptyList(),
 )
+
+/** Polyline of the active route. Straight segments until the Routes API answers (or if it fails). */
+data class RoutePath(val points: List<GeoPoint>, val followsStreets: Boolean) {
+    companion object {
+        val NONE = RoutePath(emptyList(), followsStreets = false)
+    }
+}
+
+/** What makes a new Routes API request necessary: another itinerary or a move of ~110 m. */
+private data class RouteRequest(val itineraryId: String, val stops: List<GeoPoint>, val originCell: Pair<Int, Int>)
 
 class ExploreViewModel(
     placesRepository: PlacesRepository,
@@ -68,18 +90,37 @@ class ExploreViewModel(
     wearRepository: WearDataLayerRepository,
     observeTravelerLocation: ObserveTravelerLocationUseCase,
     private val planSession: PlanSession,
+    private val routesRepository: RoutesRepository,
 ) : LocationAwareViewModel(observeTravelerLocation) {
 
     private val local = MutableStateFlow(ExploreLocalState())
     private val places = flow { emit(placesRepository.getPlaces()) }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val routePath: Flow<RoutePath> =
+        combine(itineraryRepository.activeItinerary, location) { itinerary, loc ->
+            itinerary?.let { RouteRequest(it.id, it.stops.map { stop -> stop.place.location }, loc.point.cell()) }
+        }
+            .distinctUntilChanged()
+            .transformLatest { request ->
+                if (request == null) {
+                    emit(RoutePath.NONE)
+                    return@transformLatest
+                }
+                val waypoints = listOf(location.value.point) + request.stops
+                emit(RoutePath(waypoints, followsStreets = false))
+                routesRepository.walkingPath(waypoints).onSuccess { emit(RoutePath(it, followsStreets = true)) }
+            }
+            .onStart { emit(RoutePath.NONE) }
+
     val state: StateFlow<ExploreUiState> = combine(
         combine(places, itineraryRepository.activeItinerary, location, ::Triple),
         combine(vibraRepository.connectionState, vibraRepository.syncStatus, wearRepository.connectedWatches, ::Triple),
-        combine(local, planSession.mapFocus, ::Pair),
-    ) { (placeList, itinerary, loc), (connection, sync, watches), (ui, focus) ->
+        combine(local, planSession.mapFocus, routePath, ::Triple),
+    ) { (placeList, itinerary, loc), (connection, sync, watches), (ui, focus, path) ->
+        val catalogueIds = placeList.map(Place::id).toSet()
         ExploreUiState(
-            places = placeList,
+            places = placeList + ui.externalPlaces.filterNot { it.id in catalogueIds },
             activeItinerary = itinerary,
             location = loc,
             connection = connection,
@@ -88,6 +129,7 @@ class ExploreViewModel(
             selectedPlaceId = ui.selectedPlaceId,
             showOnlyRecommended = ui.showOnlyRecommended,
             focusRequest = focus,
+            routePath = path,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
 
@@ -98,13 +140,21 @@ class ExploreViewModel(
     /** Selects the requested place (making sure its marker is visible) and marks the request done. */
     fun onFocusHandled(request: MapFocusRequest) {
         val recommended = state.value.recommendedIds
+        val known = state.value.places.any { it.id == request.placeId }
         local.update {
             it.copy(
                 selectedPlaceId = request.placeId,
                 showOnlyRecommended = it.showOnlyRecommended && request.placeId in recommended,
+                externalPlaces = if (known) it.externalPlaces else (it.externalPlaces + request.place).takeLast(MAX_EXTERNAL),
             )
         }
         planSession.consumeFocus(request)
+    }
+
+    private fun GeoPoint.cell(): Pair<Int, Int> = (latitude * 1_000).roundToInt() to (longitude * 1_000).roundToInt()
+
+    private companion object {
+        const val MAX_EXTERNAL = 20
     }
 
     fun clearRoute() {
