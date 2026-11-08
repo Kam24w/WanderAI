@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.SignUpResult
 import com.vibra.wanderai.domain.repository.AuthRepository
+import com.vibra.wanderai.domain.usecase.CredentialValidator
+import com.vibra.wanderai.domain.usecase.NameIssue
+import com.vibra.wanderai.domain.usecase.PasswordRule
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,14 +18,28 @@ import kotlinx.coroutines.launch
 enum class AuthFormError(@param:StringRes val messageRes: Int) {
     EMPTY_FIELDS(R.string.error_empty_fields),
     INVALID_EMAIL(R.string.error_invalid_email),
-    PASSWORD_LENGTH(R.string.error_password_length),
-    PASSWORDS_MISMATCH(R.string.error_passwords_mismatch),
+    FIX_FIELDS(R.string.error_fix_fields),
     LOGIN_FAILED(R.string.error_login_failed),
     REGISTER_FAILED(R.string.error_register_failed),
 }
 
-private val EMAIL_REGEX = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
-private const val MIN_PASSWORD_LENGTH = 8
+@get:StringRes
+val NameIssue.messageRes: Int
+    get() = when (this) {
+        NameIssue.TOO_SHORT -> R.string.error_name_short
+        NameIssue.TOO_LONG -> R.string.error_name_long
+        NameIssue.INVALID_CHARACTERS -> R.string.error_name_chars
+    }
+
+@get:StringRes
+val PasswordRule.labelRes: Int
+    get() = when (this) {
+        PasswordRule.MIN_LENGTH -> R.string.password_rule_length
+        PasswordRule.UPPERCASE -> R.string.password_rule_upper
+        PasswordRule.DIGIT -> R.string.password_rule_digit
+        PasswordRule.SPECIAL -> R.string.password_rule_special
+        PasswordRule.NOT_PREDICTABLE -> R.string.password_rule_predictable
+    }
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 
@@ -46,7 +63,7 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
         val email = current.email.trim()
         val error = when {
             email.isBlank() || current.password.isBlank() -> AuthFormError.EMPTY_FIELDS
-            !EMAIL_REGEX.matches(email) -> AuthFormError.INVALID_EMAIL
+            !CredentialValidator.isValidEmail(email) -> AuthFormError.INVALID_EMAIL
             else -> null
         }
         if (error != null) {
@@ -74,13 +91,24 @@ data class RegisterUiState(
     val error: AuthFormError? = null,
     /** Set when Supabase requires e-mail confirmation before the first sign-in. */
     val confirmationSentTo: String? = null,
-)
+    /** Field errors are shown after the first submit attempt (then update live). */
+    val showFieldErrors: Boolean = false,
+) {
+    val nameIssue: NameIssue? get() = CredentialValidator.validateName(name)
+    val isEmailValid: Boolean get() = CredentialValidator.isValidEmail(email)
+    val failedPasswordRules: Set<PasswordRule> get() = CredentialValidator.failedPasswordRules(password)
+    val passwordsMatch: Boolean get() = password == confirmPassword && confirmPassword.isNotEmpty()
+
+    val isValid: Boolean
+        get() = nameIssue == null && isEmailValid && failedPasswordRules.isEmpty() && passwordsMatch
+}
 
 class RegisterViewModel(private val authRepository: AuthRepository) : ViewModel() {
     private val _state = MutableStateFlow(RegisterUiState())
     val state: StateFlow<RegisterUiState> = _state.asStateFlow()
 
-    fun onNameChange(value: String) = _state.update { it.copy(name = value, error = null) }
+    fun onNameChange(value: String) =
+        _state.update { it.copy(name = value.take(CredentialValidator.NAME_MAX), error = null) }
     fun onEmailChange(value: String) = _state.update { it.copy(email = value, error = null) }
     fun onPasswordChange(value: String) = _state.update { it.copy(password = value, error = null) }
     fun onConfirmPasswordChange(value: String) = _state.update { it.copy(confirmPassword = value, error = null) }
@@ -88,15 +116,13 @@ class RegisterViewModel(private val authRepository: AuthRepository) : ViewModel(
     fun submit() {
         val s = _state.value
         val email = s.email.trim()
-        val error = when {
-            listOf(s.name, email, s.password, s.confirmPassword).any(String::isBlank) -> AuthFormError.EMPTY_FIELDS
-            !EMAIL_REGEX.matches(email) -> AuthFormError.INVALID_EMAIL
-            s.password.length < MIN_PASSWORD_LENGTH -> AuthFormError.PASSWORD_LENGTH
-            s.password != s.confirmPassword -> AuthFormError.PASSWORDS_MISMATCH
-            else -> null
-        }
-        if (error != null) {
-            _state.update { it.copy(error = error) }
+        if (!s.isValid) {
+            val error = if (listOf(s.name, email, s.password, s.confirmPassword).any(String::isBlank)) {
+                AuthFormError.EMPTY_FIELDS
+            } else {
+                AuthFormError.FIX_FIELDS
+            }
+            _state.update { it.copy(error = error, showFieldErrors = true) }
             return
         }
         _state.update { it.copy(isLoading = true, error = null) }
