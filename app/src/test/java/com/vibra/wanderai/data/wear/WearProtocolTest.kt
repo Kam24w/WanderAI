@@ -63,6 +63,45 @@ class WearProtocolTest {
     }
 
     @Test
+    fun `every action the watch encodes is decoded`() {
+        // Literal output of Vibra's NavigationEventParser.encode(UserAction(type, timestamp)).
+        val expected = mapOf(
+            "REPEAT_INSTRUCTION" to WatchUserAction.REPEAT_INSTRUCTION,
+            "PAUSE_GUIDANCE" to WatchUserAction.PAUSE_GUIDANCE,
+            "RESUME_GUIDANCE" to WatchUserAction.RESUME_GUIDANCE,
+            "STOP_NAVIGATION" to WatchUserAction.STOP_NAVIGATION,
+            "ACKNOWLEDGE" to WatchUserAction.ACK,
+        )
+        expected.forEach { (name, action) ->
+            val payload = """{"action":"$name","timestamp":1778344620000}""".toByteArray(Charsets.UTF_8)
+            assertEquals(name, action, WearProtocol.decodeUserAction(payload))
+        }
+    }
+
+    @Test
+    fun `paths match the watch contract`() {
+        assertEquals("/wanderai/navigation_event", WearProtocol.PATH_NAVIGATION_EVENT)
+        assertEquals("/wanderai/active_route", WearProtocol.PATH_ACTIVE_ROUTE)
+        assertEquals("/vibra/user_action", WearProtocol.PATH_USER_ACTION)
+    }
+
+    @Test
+    fun `alert event carries the pattern the watch vibrates while paused`() {
+        val event = NavigationEvent(
+            action = NavigationAction.ALERT,
+            instruction = "Atención",
+            distanceMeters = 0,
+            vibrationPattern = VibrationPattern.forAction(NavigationAction.ALERT, HapticIntensity.SOFT),
+            timestampMillis = 1,
+        )
+        assertEquals(
+            """{"action":"ALERT","instruction":"Atención","distance_meters":0,""" +
+                """"vibration_pattern":{"pulses":5,"duration_ms":100,"amplitude":255},"timestamp":1}""",
+            WearProtocol.encodeNavigationEvent(event).toString(Charsets.UTF_8),
+        )
+    }
+
+    @Test
     fun `unknown user actions are ignored`() {
         assertNull(WearProtocol.decodeUserAction("SELF_DESTRUCT".toByteArray()))
         assertNull(WearProtocol.decodeUserAction("""{"type":"ACK"}""".toByteArray()))
