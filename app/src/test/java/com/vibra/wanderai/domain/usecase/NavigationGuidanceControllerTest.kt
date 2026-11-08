@@ -30,6 +30,7 @@ class NavigationGuidanceControllerTest {
         val routes = mutableListOf<ActiveRouteState>()
 
         override suspend fun refreshConnectedWatches(): List<WearWatch> = connectedWatches.value
+        override fun onWatchMessage(path: String, data: ByteArray) = Unit
 
         override suspend fun sendNavigationEvent(event: NavigationEvent): Result<Int> {
             sent += event
@@ -47,6 +48,7 @@ class NavigationGuidanceControllerTest {
         override fun repeatInstruction(instruction: String) { log += "repeat:$instruction" }
         override fun guidancePaused() { log += "paused" }
         override fun guidanceResumed() { log += "resumed" }
+        override fun navigationStopped() { log += "stopped" }
     }
 
     private val text = object : GuidanceTextProvider {
@@ -57,6 +59,7 @@ class NavigationGuidanceControllerTest {
     private val wear = FakeWear()
     private val announcer = FakeAnnouncer()
     private var now = 1_000L
+    private var stopRequests = 0
     private val controller = NavigationGuidanceController(
         wear = wear,
         activeItinerary = MutableStateFlow<Itinerary?>(null),
@@ -64,6 +67,7 @@ class NavigationGuidanceControllerTest {
         text = text,
         announcer = announcer,
         clock = { now },
+        stopRoute = { stopRequests++ },
     )
 
     @Test
@@ -133,5 +137,18 @@ class NavigationGuidanceControllerTest {
         controller.startRoute(HapticCommand.Straight(120))
         assertFalse(controller.state.value.paused)
         assertEquals(NavigationAction.STRAIGHT, wear.sent.single().action)
+    }
+
+    @Test
+    fun `stop from the watch cancels the route on the phone and resets the session`() = runTest {
+        controller.onUserAction(WatchUserAction.PAUSE_GUIDANCE)
+        controller.publish(NavigationAction.TURN_LEFT, 30)
+
+        controller.onUserAction(WatchUserAction.STOP_NAVIGATION)
+
+        assertEquals(1, stopRequests)
+        assertFalse(controller.state.value.paused)
+        assertEquals(null, controller.state.value.lastEvent)
+        assertEquals(listOf("paused", "stopped"), announcer.log)
     }
 }
