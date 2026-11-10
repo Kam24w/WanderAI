@@ -1,6 +1,7 @@
 package com.vibra.wanderai.domain.usecase
 
 import com.vibra.wanderai.domain.model.ActiveRouteState
+import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.GuidanceState
 import com.vibra.wanderai.domain.model.HapticCommand
 import com.vibra.wanderai.domain.model.HapticIntensity
@@ -19,7 +20,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
@@ -29,7 +32,9 @@ import kotlinx.coroutines.launch
  * Application-scoped coordinator of the Wear OS guidance session:
  *  - turns cues into [NavigationEvent]s for `/wanderai/navigation_event`,
  *  - mirrors the active itinerary to the `/wanderai/active_route` DataItem,
- *  - reacts to ACK / REPEAT / PAUSE / RESUME / STOP sent from the watch.
+ *  - reacts to ACK / REPEAT / PAUSE / RESUME / STOP sent from the watch,
+ *  - tracks the traveler during a route ([LiveGuidanceTracker]): live remaining
+ *    distance plus U_TURN / STRAIGHT / ARRIVED cues.
  *
  * While paused, cues are remembered but not sent (except [NavigationAction.ALERT]);
  * the latest one is re-sent on resume.
@@ -43,6 +48,10 @@ class NavigationGuidanceController(
     private val clock: () -> Long = System::currentTimeMillis,
     /** Cancels the active route on the phone (clears the itinerary and the map). */
     private val stopRoute: () -> Unit = {},
+    /** GPS fixes while collected; drives [LiveGuidanceTracker] during a route. */
+    private val locationUpdates: () -> Flow<GeoPoint> = { emptyFlow() },
+    /** True while a route is being tracked (keeps location alive with the screen off). */
+    private val onTrackingChanged: (Boolean) -> Unit = {},
 ) {
     private val _state = MutableStateFlow(GuidanceState())
     val state: StateFlow<GuidanceState> = _state.asStateFlow()
@@ -62,6 +71,33 @@ class NavigationGuidanceController(
                         if (!route.routeActive) _state.value = GuidanceState()
                         wear.updateActiveRoute(route)
                     }
+            }
+            launch {
+                activeItinerary
+                    .map { itinerary -> itinerary?.stops?.firstOrNull()?.let { itinerary.id to it } }
+                    .distinctUntilChanged()
+                    .collectLatest { target ->
+                        onTrackingChanged(target != null)
+                        target?.let { (_, stop) -> track(stop.place.name, stop.place.location, stop.distanceMeters) }
+                    }
+            }
+        }
+    }
+
+    /**
+     * Follows the traveler towards the first stop: keeps the watch's remaining
+     * distance up to date and sends U_TURN / STRAIGHT / ARRIVED as they walk.
+     */
+    private suspend fun track(name: String, destination: GeoPoint, routeMeters: Int) {
+        val tracker = LiveGuidanceTracker(destination, routeMeters)
+        locationUpdates().collect { point ->
+            tracker.onLocation(point).forEach { update ->
+                when (update) {
+                    is LiveGuidanceTracker.Update.RemainingDistance -> wear.updateActiveRoute(
+                        ActiveRouteState(name, text.distance(update.meters), routeActive = true),
+                    )
+                    is LiveGuidanceTracker.Update.Cue -> publish(update.action, update.distanceMeters)
+                }
             }
         }
     }
@@ -141,6 +177,7 @@ class NavigationGuidanceController(
             if (direction == TurnDirection.LEFT) NavigationAction.TURN_LEFT else NavigationAction.TURN_RIGHT
         is HapticCommand.Straight -> NavigationAction.STRAIGHT
         HapticCommand.Arrived -> NavigationAction.ARRIVED
+        HapticCommand.UTurn -> NavigationAction.U_TURN
         HapticCommand.Ping -> NavigationAction.ALERT
         // The watch receives the route through the active_route DataItem instead.
         is HapticCommand.ItinerarySync -> null

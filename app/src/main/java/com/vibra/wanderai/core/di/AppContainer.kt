@@ -1,5 +1,6 @@
 package com.vibra.wanderai.core.di
 
+import com.vibra.wanderai.data.location.NavigationTrackingService
 import android.content.Context
 import com.vibra.wanderai.BuildConfig
 import com.vibra.wanderai.core.DevEnvironment
@@ -115,6 +116,9 @@ class AppContainer(context: Context) {
                 itineraryRepository.setActive(null)
                 vibraRepository.updateSyncStatus(WatchSyncStatus.Idle)
             },
+            // Live remaining distance + U-turn/arrival cues while a route is active.
+            locationUpdates = { locationRepository.observeLocation() },
+            onTrackingChanged = { active -> NavigationTrackingService.setActive(appContext, active) },
         )
     }
 

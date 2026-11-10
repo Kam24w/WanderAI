@@ -1,6 +1,11 @@
 package com.vibra.wanderai.domain.usecase
 
 import com.vibra.wanderai.domain.model.ActiveRouteState
+import com.vibra.wanderai.domain.model.GeoPoint
+import com.vibra.wanderai.domain.model.ItineraryStop
+import com.vibra.wanderai.domain.model.LocalizedText
+import com.vibra.wanderai.domain.model.Place
+import com.vibra.wanderai.domain.model.PlaceCategory
 import com.vibra.wanderai.domain.model.HapticCommand
 import com.vibra.wanderai.domain.model.HapticIntensity
 import com.vibra.wanderai.domain.model.Itinerary
@@ -15,6 +20,7 @@ import com.vibra.wanderai.domain.repository.WearDataLayerRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -150,5 +156,47 @@ class NavigationGuidanceControllerTest {
         assertFalse(controller.state.value.paused)
         assertEquals(null, controller.state.value.lastEvent)
         assertEquals(listOf("paused", "stopped"), announcer.log)
+    }
+
+    @Test
+    fun `an active route is tracked live until the traveler arrives`() = runTest(UnconfinedTestDispatcher()) {
+        val destination = GeoPoint(1.2136, -77.2811)
+        fun south(meters: Double) = GeoPoint(destination.latitude - meters / 111_195.0, destination.longitude)
+        val place = Place(
+            id = "plaza",
+            name = "Plaza de Nariño",
+            category = PlaceCategory.HERITAGE,
+            location = destination,
+            rating = 4.5,
+            averageCostCop = 0,
+            visitMinutes = 20,
+            summary = LocalizedText("Plaza", "Square"),
+        )
+        val itinerary = MutableStateFlow<Itinerary?>(null)
+        val fixes = MutableSharedFlow<GeoPoint>()
+        val tracking = mutableListOf<Boolean>()
+        val tracked = NavigationGuidanceController(
+            wear = wear,
+            activeItinerary = itinerary,
+            hapticIntensity = MutableStateFlow(HapticIntensity.STRONG),
+            text = text,
+            announcer = announcer,
+            clock = { now },
+            locationUpdates = { fixes },
+            onTrackingChanged = { tracking += it },
+        )
+        tracked.start(backgroundScope)
+
+        itinerary.value = Itinerary("route-1", listOf(ItineraryStop(place, walkingMinutes = 3, distanceMeters = 200)), 0L)
+        fixes.emit(south(200.0))
+        fixes.emit(south(250.0))
+        fixes.emit(south(10.0))
+        itinerary.value = null
+
+        assertEquals(listOf(false, true, false), tracking)
+        assertEquals(listOf(NavigationAction.U_TURN, NavigationAction.ARRIVED), wear.sent.map { it.action })
+        assertTrue(wear.routes.any { it.routeActive && it.remainingDistance == "250 m" })
+        assertTrue(wear.routes.any { it.routeActive && it.remainingDistance == "0 m" })
+        assertFalse(wear.routes.last().routeActive)
     }
 }
