@@ -36,7 +36,10 @@ class ResourceGuidanceTextProvider(context: Context) : GuidanceTextProvider {
         return when (action) {
             NavigationAction.TURN_LEFT -> res.getString(R.string.haptic_turn_left, distance)
             NavigationAction.TURN_RIGHT -> res.getString(R.string.haptic_turn_right, distance)
-            NavigationAction.U_TURN -> res.getString(R.string.wear_instruction_u_turn, distance)
+            // Live U-turn cues have no distance: "turn around now".
+            NavigationAction.U_TURN ->
+                if (distanceMeters <= 0) res.getString(R.string.haptic_u_turn)
+                else res.getString(R.string.wear_instruction_u_turn, distance)
             NavigationAction.STRAIGHT -> res.getString(R.string.haptic_straight, distance)
             NavigationAction.ARRIVED -> res.getString(R.string.haptic_arrived)
             NavigationAction.ALERT -> res.getString(R.string.wear_instruction_alert)
