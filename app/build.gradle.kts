@@ -6,6 +6,17 @@ val localProperties = Properties().apply {
         file.inputStream().use { load(it) }
     }
 }
+
+/**
+ * Firma de release compartida por WanderAI (teléfono) y Vibra (reloj): la Data Layer
+ * solo entrega mensajes entre apps con el mismo applicationId Y el mismo certificado.
+ * Los secretos van en local.properties (no versionado) o en variables de entorno:
+ * VIBRA_RELEASE_STORE_FILE, VIBRA_RELEASE_STORE_PASSWORD, VIBRA_RELEASE_KEY_ALIAS,
+ * VIBRA_RELEASE_KEY_PASSWORD. Sin ellos, la build release queda sin firmar.
+ */
+fun releaseSecret(name: String): String? =
+    (localProperties.getProperty(name) ?: System.getenv(name))?.takeIf { it.isNotBlank() }
+val releaseStoreFile = releaseSecret("VIBRA_RELEASE_STORE_FILE")
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -61,8 +72,20 @@ android {
         )
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = releaseSecret("VIBRA_RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSecret("VIBRA_RELEASE_KEY_ALIAS")
+                keyPassword = releaseSecret("VIBRA_RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseStoreFile != null) signingConfig = signingConfigs.getByName("release")
             optimization {
                 enable = true
                 packageScope = setOf(
