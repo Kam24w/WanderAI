@@ -59,9 +59,11 @@ class LocalDevBridge(private val port: Int = PORT) {
     @Volatile private var lastRoute: Frame? = null
 
     private var job: Job? = null
+    private var scope: CoroutineScope? = null
 
     fun start(scope: CoroutineScope) {
         if (job != null) return
+        this.scope = scope
         job = scope.launch(Dispatchers.IO) {
             while (isActive) {
                 runCatching { serve() }
@@ -83,6 +85,9 @@ class LocalDevBridge(private val port: Int = PORT) {
 
     private suspend fun handleClient(socket: Socket) {
         socket.tcpNoDelay = true
+        // Heartbeat: if the watch sends nothing (not even PING) for READ_TIMEOUT_MS the link
+        // is dead (watch asleep, emulator network cut...) even though TCP never said so.
+        socket.soTimeout = READ_TIMEOUT_MS
         val out = DataOutputStream(BufferedOutputStream(socket.getOutputStream()))
         writeMutex.withLock {
             client = socket
@@ -91,16 +96,24 @@ class LocalDevBridge(private val port: Int = PORT) {
         _connected.value = true
         Log.i(TAG, "Reloj conectado por el puente local")
         lastRoute?.let { send(it.path, it.data) }
+        val pinger = scope?.launch(Dispatchers.IO) {
+            while (isActive) {
+                delay(PING_INTERVAL_MS)
+                if (!send(PATH_PING, ByteArray(0))) break
+            }
+        }
         try {
             val input = DataInputStream(BufferedInputStream(socket.getInputStream()))
             while (true) {
-                _incoming.emit(readFrame(input))
+                val frame = readFrame(input)
+                if (frame.path != PATH_PING) _incoming.emit(frame)
             }
         } catch (_: EOFException) {
             // Cierre ordenado del reloj.
         } catch (e: IOException) {
             Log.d(TAG, "Conexión del puente cerrada: ${e.message}")
         } finally {
+            pinger?.cancel()
             writeMutex.withLock {
                 if (client === socket) {
                     client = null
@@ -131,6 +144,10 @@ class LocalDevBridge(private val port: Int = PORT) {
 
     companion object {
         const val PORT = 5650
+        /** Heartbeat frame, both directions; never reaches the app logic. */
+        const val PATH_PING = "/bridge/ping"
+        const val PING_INTERVAL_MS = 3_000L
+        const val READ_TIMEOUT_MS = 10_000
         const val NODE_ID = "local-dev-bridge"
         private const val TAG = "VibraDevBridge"
         private const val RESTART_DELAY_MS = 3_000L
