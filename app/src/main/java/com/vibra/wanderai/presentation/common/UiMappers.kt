@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.DirectionsWalk
 import androidx.compose.material.icons.outlined.TurnLeft
 import androidx.compose.material.icons.outlined.TurnRight
+import androidx.compose.material.icons.outlined.UTurnLeft
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.Church
 import androidx.compose.material.icons.outlined.Flag
@@ -116,6 +117,7 @@ val HapticCommand.icon: ImageVector
             else Icons.Outlined.TurnRight
         is HapticCommand.Straight -> Icons.Outlined.Straight
         HapticCommand.Arrived -> Icons.Outlined.Flag
+        HapticCommand.UTurn -> Icons.Outlined.UTurnLeft
         is HapticCommand.ItinerarySync -> Icons.Outlined.Sync
         HapticCommand.Ping -> Icons.Outlined.Vibration
     }
@@ -128,6 +130,7 @@ fun HapticCommand.describe(): String = when (this) {
     )
     is HapticCommand.Straight -> stringResource(R.string.haptic_straight, formatDistance(distanceMeters))
     HapticCommand.Arrived -> stringResource(R.string.haptic_arrived)
+    HapticCommand.UTurn -> stringResource(R.string.haptic_u_turn)
     is HapticCommand.ItinerarySync -> pluralStringResource(R.plurals.haptic_sync, stopCount, stopCount)
     HapticCommand.Ping -> stringResource(R.string.haptic_ping)
 }

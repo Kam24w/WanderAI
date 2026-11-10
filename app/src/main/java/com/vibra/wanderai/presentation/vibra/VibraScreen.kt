@@ -35,6 +35,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.TurnLeft
 import androidx.compose.material.icons.outlined.TurnRight
+import androidx.compose.material.icons.outlined.UTurnLeft
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Battery5Bar
 import androidx.compose.material.icons.outlined.Bluetooth
@@ -480,6 +481,12 @@ private fun TestPadCard(state: VibraUiState, onSend: (HapticCommand) -> Unit) {
             }
             TestButton(Icons.Outlined.TurnRight, stringResource(R.string.vibra_test_right), Modifier.weight(1f)) {
                 onSend(HapticCommand.Turn(TurnDirection.RIGHT, TEST_DISTANCE_METERS))
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TestButton(Icons.Outlined.UTurnLeft, stringResource(R.string.vibra_test_u_turn), Modifier.weight(1f)) {
+                onSend(HapticCommand.UTurn)
             }
             TestButton(Icons.Outlined.Flag, stringResource(R.string.vibra_test_arrived), Modifier.weight(1f)) {
                 onSend(HapticCommand.Arrived)
