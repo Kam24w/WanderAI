@@ -14,8 +14,10 @@ import com.vibra.wanderai.domain.model.WatchUserAction
 import com.vibra.wanderai.domain.repository.GuidanceAnnouncer
 import com.vibra.wanderai.domain.repository.GuidanceTextProvider
 import com.vibra.wanderai.domain.repository.WearDataLayerRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,11 +54,20 @@ class NavigationGuidanceController(
     private val locationUpdates: () -> Flow<GeoPoint> = { emptyFlow() },
     /** True while a route is being tracked (keeps location alive with the screen off). */
     private val onTrackingChanged: (Boolean) -> Unit = {},
+    /** Live tracking failed (e.g. location permission revoked); the route itself stays. */
+    private val onTrackingError: (Throwable) -> Unit = {},
 ) {
     private val _state = MutableStateFlow(GuidanceState())
     val state: StateFlow<GuidanceState> = _state.asStateFlow()
 
     private var job: Job? = null
+
+    /**
+     * Last cue the watch did not receive (link down: Bluetooth gap, tunnel restart...).
+     * It is re-sent with a fresh timestamp as soon as the link is back, if it is
+     * still recent enough to be useful ([CUE_RETRY_WINDOW_MS]).
+     */
+    @Volatile private var undeliveredCue: NavigationEvent? = null
 
     /** Starts listening to the watch and syncing the route. Safe to call more than once. */
     fun start(scope: CoroutineScope) {
@@ -88,17 +99,34 @@ class NavigationGuidanceController(
      * Follows the traveler towards the first stop: keeps the watch's remaining
      * distance up to date and sends U_TURN / STRAIGHT / ARRIVED as they walk.
      */
-    private suspend fun track(name: String, destination: GeoPoint, routeMeters: Int) {
+    private suspend fun track(name: String, destination: GeoPoint, routeMeters: Int) = coroutineScope {
+        // Watching the watch list during a route also polls the Data Layer nodes, so a
+        // reconnection is noticed even when the traveler stands still (no GPS fixes).
+        launch {
+            wear.connectedWatches
+                .map { it.isNotEmpty() }
+                .distinctUntilChanged()
+                .collect { linked -> if (linked) retryUndeliveredCue() }
+        }
         val tracker = LiveGuidanceTracker(destination, routeMeters)
-        locationUpdates().collect { point ->
-            tracker.onLocation(point).forEach { update ->
-                when (update) {
-                    is LiveGuidanceTracker.Update.RemainingDistance -> wear.updateActiveRoute(
-                        ActiveRouteState(name, text.distance(update.meters), routeActive = true),
-                    )
-                    is LiveGuidanceTracker.Update.Cue -> publish(update.action, update.distanceMeters)
+        try {
+            locationUpdates().collect { point ->
+                retryUndeliveredCue()
+                tracker.onLocation(point).forEach { update ->
+                    when (update) {
+                        // A DataItem: Play services keeps it and syncs it when the watch reconnects.
+                        is LiveGuidanceTracker.Update.RemainingDistance -> wear.updateActiveRoute(
+                            ActiveRouteState(name, text.distance(update.meters), routeActive = true),
+                        )
+                        is LiveGuidanceTracker.Update.Cue -> publish(update.action, update.distanceMeters)
+                    }
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // GPS provider gone or permission revoked mid-route: stop tracking, keep the app alive.
+            onTrackingError(e)
         }
     }
 
@@ -113,7 +141,19 @@ class NavigationGuidanceController(
         val event = buildEvent(action, distanceMeters)
         val paused = _state.updateAndGet { it.copy(lastEvent = event) }.paused
         if (paused && action != NavigationAction.ALERT) return Result.success(0)
-        return wear.sendNavigationEvent(event)
+        return wear.sendNavigationEvent(event).also { result ->
+            undeliveredCue = if (result.isSuccess) null else event
+        }
+    }
+
+    /** Re-sends [undeliveredCue] if there is one and it is still fresh; never throws. */
+    suspend fun retryUndeliveredCue() {
+        val cue = undeliveredCue ?: return
+        if (clock() - cue.timestampMillis > CUE_RETRY_WINDOW_MS || _state.value.paused) {
+            undeliveredCue = null
+            return
+        }
+        if (wear.sendNavigationEvent(cue.copy(timestampMillis = clock())).isSuccess) undeliveredCue = null
     }
 
     /** A route sent explicitly from the phone starts a fresh session, so it lifts any pause. */
@@ -123,6 +163,8 @@ class NavigationGuidanceController(
     }
 
     suspend fun onUserAction(action: WatchUserAction) {
+        // A message from the watch proves the link is back.
+        if (action != WatchUserAction.PAUSE_GUIDANCE) retryUndeliveredCue()
         when (action) {
             WatchUserAction.ACK -> _state.update { it.copy(lastAckMillis = clock()) }
 
@@ -187,5 +229,10 @@ class NavigationGuidanceController(
         is HapticCommand.Turn -> distanceMeters
         is HapticCommand.Straight -> distanceMeters
         else -> 0
+    }
+
+    private companion object {
+        /** A missed cue older than this is no longer useful to the traveler. */
+        const val CUE_RETRY_WINDOW_MS = 60_000L
     }
 }

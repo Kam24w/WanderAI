@@ -17,8 +17,10 @@ import com.vibra.wanderai.domain.model.WearWatch
 import com.vibra.wanderai.domain.repository.GuidanceAnnouncer
 import com.vibra.wanderai.domain.repository.GuidanceTextProvider
 import com.vibra.wanderai.domain.repository.WearDataLayerRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -27,18 +29,27 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class NavigationGuidanceControllerTest {
 
     private class FakeWear : WearDataLayerRepository {
-        override val connectedWatches: StateFlow<List<WearWatch>> = MutableStateFlow(listOf(WearWatch("n1", "Pixel Watch")))
+        override val connectedWatches = MutableStateFlow(listOf(WearWatch("n1", "Pixel Watch")))
         override val userActions = MutableSharedFlow<WatchUserAction>()
         val sent = mutableListOf<NavigationEvent>()
         val routes = mutableListOf<ActiveRouteState>()
+
+        /** Simulates a Bluetooth gap: no nodes and every message fails. */
+        var linkDown = false
+            set(value) {
+                field = value
+                connectedWatches.value = if (value) emptyList() else listOf(WearWatch("n1", "Pixel Watch"))
+            }
 
         override suspend fun refreshConnectedWatches(): List<WearWatch> = connectedWatches.value
         override fun onWatchMessage(path: String, data: ByteArray) = Unit
 
         override suspend fun sendNavigationEvent(event: NavigationEvent): Result<Int> {
+            if (linkDown) return Result.failure(IllegalStateException("NOT_CONNECTED"))
             sent += event
             return Result.success(1)
         }
@@ -198,5 +209,86 @@ class NavigationGuidanceControllerTest {
         assertTrue(wear.routes.any { it.routeActive && it.remainingDistance == "250 m" })
         assertTrue(wear.routes.any { it.routeActive && it.remainingDistance == "0 m" })
         assertFalse(wear.routes.last().routeActive)
+    }
+
+    private val plaza = Place(
+        id = "plaza",
+        name = "Plaza de Nariño",
+        category = PlaceCategory.HERITAGE,
+        location = GeoPoint(1.2136, -77.2811),
+        rating = 4.5,
+        averageCostCop = 0,
+        visitMinutes = 20,
+        summary = LocalizedText("Plaza", "Square"),
+    )
+
+    private fun southOfPlaza(meters: Double) = GeoPoint(plaza.location.latitude - meters / 111_195.0, plaza.location.longitude)
+
+    @Test
+    fun `a cue missed during a bluetooth gap is re-sent on reconnection and tracking keeps going`() =
+        runTest(UnconfinedTestDispatcher()) {
+            val itinerary = MutableStateFlow<Itinerary?>(null)
+            val fixes = MutableSharedFlow<GeoPoint>()
+            val tracked = NavigationGuidanceController(
+                wear = wear,
+                activeItinerary = itinerary,
+                hapticIntensity = MutableStateFlow(HapticIntensity.STRONG),
+                text = text,
+                announcer = announcer,
+                clock = { now },
+                locationUpdates = { fixes },
+            )
+            tracked.start(backgroundScope)
+            itinerary.value = Itinerary("route-1", listOf(ItineraryStop(plaza, walkingMinutes = 3, distanceMeters = 200)), 0L)
+            fixes.emit(southOfPlaza(200.0))
+
+            wear.linkDown = true
+            fixes.emit(southOfPlaza(250.0)) // walking away: U_TURN, but the watch is unreachable
+            assertTrue(wear.sent.isEmpty())
+            assertTrue("remaining distance is still written as a DataItem", wear.routes.any { it.remainingDistance == "250 m" })
+
+            now += 20_000
+            wear.linkDown = false // Bluetooth back
+            assertEquals(listOf(NavigationAction.U_TURN), wear.sent.map { it.action })
+            assertEquals("re-sent with a fresh timestamp", now, wear.sent.single().timestampMillis)
+
+            fixes.emit(southOfPlaza(150.0))
+            assertTrue(wear.routes.any { it.routeActive && it.remainingDistance == "150 m" })
+            assertEquals("no duplicate re-send", 1, wear.sent.count { it.action == NavigationAction.U_TURN })
+        }
+
+    @Test
+    fun `stale missed cues are dropped instead of vibrating late`() = runTest {
+        wear.linkDown = true
+        controller.publish(NavigationAction.TURN_LEFT, 30)
+        wear.linkDown = false
+        now += 61_000
+
+        controller.retryUndeliveredCue()
+
+        assertTrue(wear.sent.isEmpty())
+    }
+
+    @Test
+    fun `a failing location source stops tracking without crashing the session`() = runTest(UnconfinedTestDispatcher()) {
+        val itinerary = MutableStateFlow<Itinerary?>(null)
+        val errors = mutableListOf<Throwable>()
+        val tracked = NavigationGuidanceController(
+            wear = wear,
+            activeItinerary = itinerary,
+            hapticIntensity = MutableStateFlow(HapticIntensity.STRONG),
+            text = text,
+            announcer = announcer,
+            clock = { now },
+            locationUpdates = { flow { throw SecurityException("location permission revoked") } },
+            onTrackingError = { errors += it },
+        )
+        tracked.start(backgroundScope)
+        itinerary.value = Itinerary("route-1", listOf(ItineraryStop(plaza, walkingMinutes = 3, distanceMeters = 200)), 0L)
+
+        assertEquals(1, errors.size)
+        assertTrue("the route stays mirrored to the watch", wear.routes.last().routeActive)
+        tracked.publish(NavigationAction.TURN_RIGHT, 20)
+        assertEquals(NavigationAction.TURN_RIGHT, wear.sent.last().action)
     }
 }
