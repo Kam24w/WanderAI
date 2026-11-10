@@ -32,6 +32,8 @@ object VibraProtocol {
     private const val OP_TURN_RIGHT: Byte = 0x02
     private const val OP_STRAIGHT: Byte = 0x03
     private const val OP_ARRIVED: Byte = 0x04
+    /** Firmware ≥ 1.1. Older firmware ignores unknown opcodes. */
+    private const val OP_U_TURN: Byte = 0x05
     private const val OP_SYNC: Byte = 0x10
     private const val OP_PING: Byte = 0x7F
 
@@ -49,6 +51,7 @@ object VibraProtocol {
                 (if (command.direction == TurnDirection.LEFT) OP_TURN_LEFT else OP_TURN_RIGHT) to command.distanceMeters
             is HapticCommand.Straight -> OP_STRAIGHT to command.distanceMeters
             HapticCommand.Arrived -> OP_ARRIVED to 0
+            HapticCommand.UTurn -> OP_U_TURN to 0
             is HapticCommand.ItinerarySync -> OP_SYNC to command.stopCount
             HapticCommand.Ping -> OP_PING to 0
         }
@@ -72,6 +75,8 @@ object VibraProtocol {
                 else longArrayOf(0, 120, 90, 120, 90, 120)
             is HapticCommand.Straight -> longArrayOf(0, 350)
             HapticCommand.Arrived -> longArrayOf(0, 80, 60, 80, 60, 80, 60, 400)
+            // Same "intermittent alert" as the Vibra watch: two bursts of three quick taps.
+            HapticCommand.UTurn -> longArrayOf(0, 60, 60, 60, 60, 60, 300, 60, 60, 60, 60, 60)
             is HapticCommand.ItinerarySync -> longArrayOf(0, 60, 80, 220)
             HapticCommand.Ping -> longArrayOf(0, 90)
         }

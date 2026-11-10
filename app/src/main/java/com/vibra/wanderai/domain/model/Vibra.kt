@@ -49,6 +49,8 @@ sealed interface HapticCommand {
     data class Turn(val direction: TurnDirection, val distanceMeters: Int) : HapticCommand
     data class Straight(val distanceMeters: Int) : HapticCommand
     data object Arrived : HapticCommand
+    /** Turn around: the traveler is walking away from the destination. */
+    data object UTurn : HapticCommand
     data class ItinerarySync(val stopCount: Int, val firstStopMeters: Int) : HapticCommand
     data object Ping : HapticCommand
 }
