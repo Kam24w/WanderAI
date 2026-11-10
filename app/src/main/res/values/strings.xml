@@ -178,6 +178,11 @@
         <item quantity="other">Itinerario de %1$d paradas</item>
     </plurals>
     <string name="haptic_ping">Señal de prueba</string>
+    <string name="haptic_u_turn">Da la vuelta</string>
+    <string name="vibra_test_u_turn">Regresar</string>
+    <string name="guidance_tracking_channel">Guía de ruta</string>
+    <string name="guidance_tracking_title">Guiando tu ruta</string>
+    <string name="guidance_tracking_body">WanderAI sigue tu ubicación para guiarte en el reloj</string>
     <string name="wear_instruction_u_turn">Da la vuelta en U en %1$s</string>
     <string name="wear_instruction_alert">Atención: revisa tu ruta en el teléfono</string>
     <string name="wear_guidance_paused">Guía pausada desde el reloj</string>

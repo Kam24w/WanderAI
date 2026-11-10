@@ -176,6 +176,11 @@
         <item quantity="other">%1$d-stop itinerary</item>
     </plurals>
     <string name="haptic_ping">Test signal</string>
+    <string name="haptic_u_turn">Turn around</string>
+    <string name="vibra_test_u_turn">U-turn</string>
+    <string name="guidance_tracking_channel">Route guidance</string>
+    <string name="guidance_tracking_title">Guiding your route</string>
+    <string name="guidance_tracking_body">WanderAI follows your location to guide you on the watch</string>
     <string name="wear_instruction_u_turn">Make a U-turn in %1$s</string>
     <string name="wear_instruction_alert">Heads up: check your route on the phone</string>
     <string name="wear_guidance_paused">Guidance paused from the watch</string>

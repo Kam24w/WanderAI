@@ -28,6 +28,10 @@
     <!-- Haptic preview on the phone (Vibra simulator) -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Live route guidance with the screen off (NavigationTrackingService). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="false" />
@@ -82,6 +86,11 @@
             Receives actions from the Vibra watch (/vibra/user_action) even when WanderAI
             is closed: the system starts this service only for that path.
         -->
+        <service
+            android:name=".data.location.NavigationTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
         <service
             android:name=".data.wear.WatchActionListenerService"
             android:exported="true">
