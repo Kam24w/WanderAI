@@ -315,7 +315,7 @@
     <string name="chat_cost_estimated">approx.</string>
     <!-- Set course (Explore) -->
     <string name="travel_mode_walk">Walk</string>
-    <string name="travel_mode_motorcycle">Motorcycle</string>
+    <string name="travel_mode_motorcycle">Moto</string>
     <string name="travel_mode_car">Car</string>
     <string name="explore_set_course">Set course</string>
     <string name="explore_course_resend">Resend course</string>
