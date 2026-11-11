@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.vibra.wanderai.domain.model.AppLanguage
 import com.vibra.wanderai.domain.model.ThemeMode
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -16,7 +17,7 @@ import kotlinx.coroutines.flow.map
 private val Context.settingsDataStore by preferencesDataStore(name = "wanderai_preferences")
 
 /**
- * Theme mode is persisted in DataStore.
+ * Theme mode and the preferred travel mode are persisted in DataStore.
  *
  * Language uses Android's native per-app locale API through AppCompat
  * (`LocaleManager` on API 33+, `AppLocalesMetadataHolderService` below),
@@ -65,7 +66,17 @@ class AndroidSettingsRepository(
         AppCompatDelegate.setApplicationLocales(locales)
     }
 
+    override val travelMode: Flow<TravelMode> =
+        context.settingsDataStore.data
+            .map { prefs -> TravelMode.fromName(prefs[TRAVEL_MODE_KEY]) }
+            .distinctUntilChanged()
+
+    override suspend fun setTravelMode(mode: TravelMode) {
+        context.settingsDataStore.edit { prefs -> prefs[TRAVEL_MODE_KEY] = mode.name }
+    }
+
     private companion object {
+        val TRAVEL_MODE_KEY = stringPreferencesKey("travel_mode")
         val THEME_KEY = stringPreferencesKey("theme_mode")
         const val VALUE_SYSTEM = "system"
         const val VALUE_LIGHT = "light"

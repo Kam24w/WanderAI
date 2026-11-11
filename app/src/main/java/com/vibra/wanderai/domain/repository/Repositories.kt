@@ -47,6 +47,10 @@ interface SettingsRepository {
     suspend fun setThemeMode(mode: ThemeMode)
     fun currentLanguage(): AppLanguage
     fun setLanguage(language: AppLanguage)
+
+    /** Last travel mode chosen for "Fijar rumbo" (walking until the traveler picks another). */
+    val travelMode: Flow<TravelMode>
+    suspend fun setTravelMode(mode: TravelMode)
 }
 
 interface LocationRepository {
