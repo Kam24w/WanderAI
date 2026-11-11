@@ -94,7 +94,7 @@ class DataStoreItineraryRepository(
                 put(
                     JSONObject()
                         .put(F_PLACE, stop.place.id)
-                        .put(F_WALK, stop.walkingMinutes)
+                        .put(F_WALK, stop.travelMinutes)
                         .put(F_DIST, stop.distanceMeters)
                 )
             }

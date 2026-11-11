@@ -67,7 +67,7 @@ sealed interface WatchSyncStatus {
         val itineraryId: String,
         val firstStopName: String,
         val firstStopMeters: Int,
-        val firstStopWalkingMinutes: Int,
+        val firstStopTravelMinutes: Int,
     ) : WatchSyncStatus
     data class Failed(val error: VibraError) : WatchSyncStatus
 }

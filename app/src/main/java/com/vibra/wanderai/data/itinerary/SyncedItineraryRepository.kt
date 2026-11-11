@@ -81,7 +81,7 @@ class SyncedItineraryRepository(
         totalMinutes = totalMinutes,
         totalDistanceM = totalDistanceMeters,
         estimatedCostCop = estimatedCostCop,
-        stops = stops.map { SavedStopRow(it.place.id, it.walkingMinutes, it.distanceMeters) },
+        stops = stops.map { SavedStopRow(it.place.id, it.travelMinutes, it.distanceMeters) },
     )
 
     private suspend fun SavedItineraryRow.toDomain(): Itinerary? {

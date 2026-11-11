@@ -46,7 +46,7 @@ class GenerateItineraryUseCase(
                 .maxByOrNull { (candidate, leg) -> score(candidate, leg.meters, stops) }
                 ?: break
 
-            stops += ItineraryStop(place, walkingMinutes = leg.minutes, distanceMeters = leg.meters)
+            stops += ItineraryStop(place, travelMinutes = leg.minutes, distanceMeters = leg.meters)
             minutesLeft -= leg.minutes + place.visitMinutes
             budgetLeft -= place.averageCostCop
             position = place.location

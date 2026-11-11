@@ -47,7 +47,7 @@ class StartNavigationToPlaceUseCase(
             stops = listOf(
                 ItineraryStop(
                     place = place,
-                    walkingMinutes = ceil(meters / WALKING_METERS_PER_MINUTE).toInt().coerceAtLeast(1),
+                    travelMinutes = ceil(meters / WALKING_METERS_PER_MINUTE).toInt().coerceAtLeast(1),
                     distanceMeters = meters,
                 ),
             ),

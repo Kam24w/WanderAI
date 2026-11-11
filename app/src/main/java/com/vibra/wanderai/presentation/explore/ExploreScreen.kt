@@ -407,7 +407,7 @@ private fun WatchSyncCard(
         itinerary == null -> stringResource(R.string.sync_msg_no_itinerary)
         sync is WatchSyncStatus.Sending -> stringResource(R.string.sync_msg_sending)
         state.isActiveItinerarySynced && sync is WatchSyncStatus.Synced ->
-            stringResource(R.string.sync_msg_synced, sync.firstStopWalkingMinutes, sync.firstStopName)
+            stringResource(R.string.sync_msg_synced, sync.firstStopTravelMinutes, sync.firstStopName)
         sync is WatchSyncStatus.Failed -> stringResource(sync.error.messageRes)
         else -> pluralStringResource(R.plurals.sync_msg_ready, itinerary.stops.size, itinerary.stops.size)
     }

@@ -52,7 +52,7 @@ class SyncItineraryToWatchUseCase(
                         itineraryId = itinerary.id,
                         firstStopName = first.place.name,
                         firstStopMeters = first.distanceMeters,
-                        firstStopWalkingMinutes = first.walkingMinutes,
+                        firstStopTravelMinutes = first.travelMinutes,
                     )
                 },
                 onFailure = {

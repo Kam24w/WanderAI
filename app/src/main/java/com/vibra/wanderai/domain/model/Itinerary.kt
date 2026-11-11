@@ -24,8 +24,8 @@ data class ItineraryFilters(
 
 data class ItineraryStop(
     val place: Place,
-    /** Walking time from the previous stop (or from the origin for the first stop). */
-    val walkingMinutes: Int,
+    /** Travel time from the previous stop (or from the origin for the first stop), in the itinerary's travel mode. */
+    val travelMinutes: Int,
     val distanceMeters: Int,
 )
 
@@ -34,7 +34,7 @@ data class Itinerary(
     val stops: List<ItineraryStop>,
     val createdAtMillis: Long,
 ) {
-    val totalMinutes: Int get() = stops.sumOf { it.walkingMinutes + it.place.visitMinutes }
+    val totalMinutes: Int get() = stops.sumOf { it.travelMinutes + it.place.visitMinutes }
     val estimatedCostCop: Int get() = stops.sumOf { it.place.averageCostCop }
     val totalDistanceMeters: Int get() = stops.sumOf { it.distanceMeters }
 

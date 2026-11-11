@@ -563,7 +563,7 @@ private fun StopRow(index: Int, stop: ItineraryStop, isLast: Boolean, onClick: (
             )
             Text(
                 text = stringResource(stop.place.category.labelRes) + " · ★ " + stop.place.rating +
-                    " · " + walkingLabel(stop.walkingMinutes),
+                    " · " + walkingLabel(stop.travelMinutes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

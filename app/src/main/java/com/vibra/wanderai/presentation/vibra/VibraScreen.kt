@@ -419,7 +419,7 @@ private fun NavigationSyncCard(state: VibraUiState, onSync: () -> Unit, onGenera
         val synced = sync is WatchSyncStatus.Synced && sync.itineraryId == itinerary.id
         if (sync is WatchSyncStatus.Synced && synced) {
             StatusPill(
-                text = stringResource(R.string.sync_msg_synced, sync.firstStopWalkingMinutes, sync.firstStopName),
+                text = stringResource(R.string.sync_msg_synced, sync.firstStopTravelMinutes, sync.firstStopName),
                 color = WanderTheme.colors.success,
                 contentColor = MaterialTheme.colorScheme.onSurface,
             )

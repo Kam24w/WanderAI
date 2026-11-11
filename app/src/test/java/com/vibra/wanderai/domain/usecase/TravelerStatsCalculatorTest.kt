@@ -30,7 +30,7 @@ class TravelerStatsCalculatorTest {
     )
 
     private fun itinerary(id: String, createdAt: Long, vararg places: Place, meters: Int = 1_000) =
-        Itinerary(id, places.map { ItineraryStop(it, walkingMinutes = 10, distanceMeters = meters) }, createdAt)
+        Itinerary(id, places.map { ItineraryStop(it, travelMinutes = 10, distanceMeters = meters) }, createdAt)
 
     @Test
     fun `no activity means nothing unlocked and zero stats`() {

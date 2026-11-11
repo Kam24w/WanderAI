@@ -198,7 +198,7 @@ class NavigationGuidanceControllerTest {
         )
         tracked.start(backgroundScope)
 
-        itinerary.value = Itinerary("route-1", listOf(ItineraryStop(place, walkingMinutes = 3, distanceMeters = 200)), 0L)
+        itinerary.value = Itinerary("route-1", listOf(ItineraryStop(place, travelMinutes = 3, distanceMeters = 200)), 0L)
         fixes.emit(south(200.0))
         fixes.emit(south(250.0))
         fixes.emit(south(10.0))
@@ -239,7 +239,7 @@ class NavigationGuidanceControllerTest {
                 locationUpdates = { fixes },
             )
             tracked.start(backgroundScope)
-            itinerary.value = Itinerary("route-1", listOf(ItineraryStop(plaza, walkingMinutes = 3, distanceMeters = 200)), 0L)
+            itinerary.value = Itinerary("route-1", listOf(ItineraryStop(plaza, travelMinutes = 3, distanceMeters = 200)), 0L)
             fixes.emit(southOfPlaza(200.0))
 
             wear.linkDown = true
@@ -284,7 +284,7 @@ class NavigationGuidanceControllerTest {
             onTrackingError = { errors += it },
         )
         tracked.start(backgroundScope)
-        itinerary.value = Itinerary("route-1", listOf(ItineraryStop(plaza, walkingMinutes = 3, distanceMeters = 200)), 0L)
+        itinerary.value = Itinerary("route-1", listOf(ItineraryStop(plaza, travelMinutes = 3, distanceMeters = 200)), 0L)
 
         assertEquals(1, errors.size)
         assertTrue("the route stays mirrored to the watch", wear.routes.last().routeActive)
