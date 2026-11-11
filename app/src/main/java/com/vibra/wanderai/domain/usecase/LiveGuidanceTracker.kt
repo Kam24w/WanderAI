@@ -2,6 +2,7 @@ package com.vibra.wanderai.domain.usecase
 
 import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.NavigationAction
+import com.vibra.wanderai.domain.model.TravelMode
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -10,16 +11,20 @@ import kotlin.math.roundToInt
  * (pure, unit-tested). It turns the traveler's position into what the Vibra watch
  * needs to keep guiding after the first cue:
  *  - [Update.RemainingDistance] for the `/wanderai/active_route` DataItem, so the
- *    watch's progress bar moves (only when it changed by [DISTANCE_STEP_METERS]);
- *  - [Update.Cue] U_TURN when the traveler keeps walking away from the destination,
- *    STRAIGHT once they are back on track, and ARRIVED inside [ARRIVAL_RADIUS_METERS].
+ *    watch's progress bar moves (only when it changed by [TravelMode.distanceStepMeters]);
+ *  - [Update.Cue] U_TURN when the traveler keeps moving away from the destination,
+ *    STRAIGHT once they are back on track, and ARRIVED inside [TravelMode.arrivalRadiusMeters].
+ *
+ * The margins depend on the [mode]: a car or a motorcycle may drive away for a block
+ * because of one-way streets, so it gets more room before a U-turn cue.
  *
  * There is no street path here, so the straight-line distance is scaled by how much
- * longer the walking route was at the start ([initialRouteMeters]).
+ * longer the street route was at the start ([initialRouteMeters]).
  */
 class LiveGuidanceTracker(
     private val destination: GeoPoint,
     private val initialRouteMeters: Int,
+    private val mode: TravelMode = TravelMode.WALK,
 ) {
     sealed interface Update {
         data class RemainingDistance(val meters: Int) : Update
@@ -42,14 +47,14 @@ class LiveGuidanceTracker(
         val remaining = (straight * factor).roundToInt()
         val updates = mutableListOf<Update>()
 
-        if (straight <= ARRIVAL_RADIUS_METERS) {
+        if (straight <= mode.arrivalRadiusMeters) {
             arrived = true
             lastReported = 0
             return listOf(Update.RemainingDistance(0), Update.Cue(NavigationAction.ARRIVED, 0))
         }
 
         val last = lastReported
-        if (last == null || abs(remaining - last) >= DISTANCE_STEP_METERS) {
+        if (last == null || abs(remaining - last) >= mode.distanceStepMeters) {
             lastReported = remaining
             updates += Update.RemainingDistance(remaining)
         }
@@ -57,13 +62,13 @@ class LiveGuidanceTracker(
         val farthest = farthestSinceUTurn
         if (farthest == null) {
             if (straight < closest) closest = straight
-            if (straight - closest >= WALKING_AWAY_METERS) {
+            if (straight - closest >= mode.wrongWayMeters) {
                 farthestSinceUTurn = straight
                 updates += Update.Cue(NavigationAction.U_TURN, 0)
             }
         } else if (straight > farthest) {
             farthestSinceUTurn = straight
-        } else if (farthest - straight >= BACK_ON_TRACK_METERS) {
+        } else if (farthest - straight >= mode.backOnTrackMeters) {
             // The traveler turned around: confirm the direction and start watching again.
             farthestSinceUTurn = null
             closest = straight
@@ -76,12 +81,7 @@ class LiveGuidanceTracker(
         if (straight <= 0.0 || initialRouteMeters <= 0) 1.0
         else (initialRouteMeters / straight).coerceIn(1.0, MAX_DETOUR_FACTOR)
 
-    companion object {
-        const val ARRIVAL_RADIUS_METERS = 25.0
-        const val DISTANCE_STEP_METERS = 10
-        /** Walking this much farther than the closest point reached means "wrong way". */
-        const val WALKING_AWAY_METERS = 40.0
-        const val BACK_ON_TRACK_METERS = 20.0
-        private const val MAX_DETOUR_FACTOR = 2.0
+    private companion object {
+        const val MAX_DETOUR_FACTOR = 2.0
     }
 }

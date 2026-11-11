@@ -2,6 +2,7 @@ package com.vibra.wanderai.domain.usecase
 
 import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.NavigationAction
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.usecase.LiveGuidanceTracker.Update
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -49,5 +50,26 @@ class LiveGuidanceTrackerTest {
         assertEquals(listOf(0), arrival.remaining())
         assertTrue(tracker.arrived)
         assertTrue(tracker.onLocation(south(5.0)).isEmpty())
+    }
+
+    @Test
+    fun `a car can drive around the block before a u turn cue`() {
+        val tracker = LiveGuidanceTracker(destination, initialRouteMeters = 900, mode = TravelMode.CAR)
+        tracker.onLocation(south(600.0))
+        // 60 m away from the destination would already be "wrong way" on foot.
+        assertTrue(tracker.onLocation(south(660.0)).cues().isEmpty())
+        assertEquals(listOf(NavigationAction.U_TURN), tracker.onLocation(south(760.0)).cues())
+        assertEquals(listOf(NavigationAction.STRAIGHT), tracker.onLocation(south(690.0)).cues())
+    }
+
+    @Test
+    fun `vehicles arrive within a wider radius`() {
+        val car = LiveGuidanceTracker(destination, initialRouteMeters = 300, mode = TravelMode.CAR)
+        car.onLocation(south(200.0))
+        assertEquals(listOf(NavigationAction.ARRIVED), car.onLocation(south(45.0)).cues())
+
+        val walk = LiveGuidanceTracker(destination, initialRouteMeters = 300)
+        walk.onLocation(south(200.0))
+        assertTrue(walk.onLocation(south(45.0)).cues().isEmpty())
     }
 }

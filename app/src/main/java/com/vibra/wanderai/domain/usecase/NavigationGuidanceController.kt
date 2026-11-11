@@ -8,6 +8,7 @@ import com.vibra.wanderai.domain.model.HapticIntensity
 import com.vibra.wanderai.domain.model.Itinerary
 import com.vibra.wanderai.domain.model.NavigationAction
 import com.vibra.wanderai.domain.model.NavigationEvent
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.model.TurnDirection
 import com.vibra.wanderai.domain.model.VibrationPattern
 import com.vibra.wanderai.domain.model.WatchUserAction
@@ -85,11 +86,11 @@ class NavigationGuidanceController(
             }
             launch {
                 activeItinerary
-                    .map { itinerary -> itinerary?.stops?.firstOrNull()?.let { itinerary.id to it } }
+                    .map { itinerary -> itinerary?.stops?.firstOrNull()?.let { Triple(itinerary.id, it, itinerary.travelMode) } }
                     .distinctUntilChanged()
                     .collectLatest { target ->
                         onTrackingChanged(target != null)
-                        target?.let { (_, stop) -> track(stop.place.name, stop.place.location, stop.distanceMeters) }
+                        target?.let { (_, stop, mode) -> track(stop.place.name, stop.place.location, stop.distanceMeters, mode) }
                     }
             }
         }
@@ -97,9 +98,10 @@ class NavigationGuidanceController(
 
     /**
      * Follows the traveler towards the first stop: keeps the watch's remaining
-     * distance up to date and sends U_TURN / STRAIGHT / ARRIVED as they walk.
+     * distance up to date and sends U_TURN / STRAIGHT / ARRIVED as they move
+     * (with margins that fit walking, riding or driving).
      */
-    private suspend fun track(name: String, destination: GeoPoint, routeMeters: Int) = coroutineScope {
+    private suspend fun track(name: String, destination: GeoPoint, routeMeters: Int, mode: TravelMode) = coroutineScope {
         // Watching the watch list during a route also polls the Data Layer nodes, so a
         // reconnection is noticed even when the traveler stands still (no GPS fixes).
         launch {
@@ -108,7 +110,7 @@ class NavigationGuidanceController(
                 .distinctUntilChanged()
                 .collect { linked -> if (linked) retryUndeliveredCue() }
         }
-        val tracker = LiveGuidanceTracker(destination, routeMeters)
+        val tracker = LiveGuidanceTracker(destination, routeMeters, mode)
         try {
             locationUpdates().collect { point ->
                 retryUndeliveredCue()
