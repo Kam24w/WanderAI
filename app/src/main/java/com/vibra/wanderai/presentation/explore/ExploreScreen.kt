@@ -39,6 +39,9 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -68,6 +71,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vibra.wanderai.BuildConfig
 import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.Place
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.model.WatchSyncStatus
 import com.vibra.wanderai.presentation.common.color
@@ -97,7 +101,7 @@ fun ExploreScreen(
         ExploreViewModel(
             it.placesRepository, it.itineraryRepository, it.vibraRepository,
             it.syncItineraryToWatch, it.wearDataLayerRepository, it.observeTravelerLocation, it.planSession,
-            it.routesRepository, it.startNavigationToPlace,
+            it.routesRepository, it.startNavigationToPlace, it.settingsRepository,
         )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -259,7 +263,9 @@ fun ExploreScreen(
                             place = place,
                             distanceMeters = state.location.point.distanceTo(place.location).roundToInt(),
                             course = state.course.takeIf { it.placeId() == place.id } ?: CourseState.Idle,
-                            isActiveCourse = state.isCourseTo(place.id),
+                            isActiveCourse = state.isCurrentCourseTo(place.id),
+                            travelMode = state.travelMode,
+                            onSelectTravelMode = viewModel::selectTravelMode,
                             onSetCourse = { viewModel.setCourse(place) },
                             onClose = { viewModel.selectPlace(null) },
                         )
@@ -299,6 +305,8 @@ private fun PlaceDetailCard(
     distanceMeters: Int,
     course: CourseState,
     isActiveCourse: Boolean,
+    travelMode: TravelMode,
+    onSelectTravelMode: (TravelMode) -> Unit,
     onSetCourse: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -330,11 +338,41 @@ private fun PlaceDetailCard(
                 Spacer(Modifier.height(4.dp))
                 Text(place.summary.localized(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(10.dp))
+                TravelModeSelector(
+                    selected = travelMode,
+                    enabled = course !is CourseState.Starting,
+                    onSelect = onSelectTravelMode,
+                )
+                Spacer(Modifier.height(8.dp))
                 CourseAction(course = course, isActiveCourse = isActiveCourse, onSetCourse = onSetCourse)
             }
             IconButton(onClick = onClose, modifier = Modifier.size(32.dp)) {
                 Icon(Icons.Outlined.Close, contentDescription = stringResource(R.string.common_close), modifier = Modifier.size(18.dp))
             }
+        }
+    }
+}
+
+/** "A pie · Moto · Carro": how the route of the next "Fijar rumbo" is calculated. */
+@Composable
+private fun TravelModeSelector(selected: TravelMode, enabled: Boolean, onSelect: (TravelMode) -> Unit) {
+    val modes = TravelMode.entries
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+        modes.forEachIndexed { index, mode ->
+            val label = stringResource(mode.labelRes)
+            SegmentedButton(
+                selected = mode == selected,
+                onClick = { onSelect(mode) },
+                enabled = enabled,
+                shape = SegmentedButtonDefaults.itemShape(index, modes.size),
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = WanderTheme.colors.brandTeal.copy(alpha = 0.16f),
+                    activeContentColor = MaterialTheme.colorScheme.onSurface,
+                    activeBorderColor = WanderTheme.colors.brandTeal,
+                ),
+                icon = { Icon(mode.icon, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                label = { Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1) },
+            )
         }
     }
 }

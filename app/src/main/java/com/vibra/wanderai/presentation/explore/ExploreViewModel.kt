@@ -12,6 +12,7 @@ import com.vibra.wanderai.domain.model.WatchSyncStatus
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.PlacesRepository
 import com.vibra.wanderai.domain.repository.RoutesRepository
+import com.vibra.wanderai.domain.repository.SettingsRepository
 import com.vibra.wanderai.domain.repository.VibraRepository
 import com.vibra.wanderai.domain.repository.WearDataLayerRepository
 import com.vibra.wanderai.domain.usecase.MapFocusRequest
@@ -58,6 +59,8 @@ data class ExploreUiState(
     val course: CourseState = CourseState.Idle,
     /** The camera should frame the new course once its path is drawn. */
     val pendingRouteFit: Boolean = false,
+    /** On foot, by motorcycle or by car: used by the next "Fijar rumbo". */
+    val travelMode: TravelMode = TravelMode.DEFAULT,
 ) {
     /** Stops of the active route: the other markers are dimmed while it is shown. */
     val routePlaceIds: Set<String> get() = activeItinerary?.stops?.map { it.place.id }?.toSet().orEmpty()
@@ -80,6 +83,9 @@ data class ExploreUiState(
     /** The active route is the course set towards [placeId]. */
     fun isCourseTo(placeId: String): Boolean = activeItinerary?.stops?.singleOrNull()?.place?.id == placeId
 
+    /** The course to [placeId] is active and uses the selected mode (otherwise it can be set again). */
+    fun isCurrentCourseTo(placeId: String): Boolean = isCourseTo(placeId) && activeItinerary?.travelMode == travelMode
+
     val selectedPlace: Place? get() = places.firstOrNull { it.id == selectedPlaceId }
 
     val isActiveItinerarySynced: Boolean
@@ -98,6 +104,7 @@ private data class ExploreLocalState(
     val externalPlaces: List<Place> = emptyList(),
     val course: CourseState = CourseState.Idle,
     val pendingRouteFit: Boolean = false,
+    val travelMode: TravelMode = TravelMode.DEFAULT,
 )
 
 /** Progress of "Fijar rumbo" for the selected place. */
@@ -132,6 +139,7 @@ class ExploreViewModel(
     private val planSession: PlanSession,
     private val routesRepository: RoutesRepository,
     private val startNavigationToPlace: StartNavigationToPlaceUseCase,
+    private val settingsRepository: SettingsRepository,
 ) : LocationAwareViewModel(observeTravelerLocation) {
 
     private val local = MutableStateFlow(ExploreLocalState())
@@ -174,10 +182,15 @@ class ExploreViewModel(
             routePath = path,
             course = ui.course,
             pendingRouteFit = ui.pendingRouteFit,
+            travelMode = ui.travelMode,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExploreUiState())
 
     init {
+        // The last mode the traveler picked is preselected (walking the first time).
+        viewModelScope.launch {
+            settingsRepository.travelMode.collect { mode -> local.update { it.copy(travelMode = mode) } }
+        }
         // The route can also end outside this screen (e.g. STOP_NAVIGATION from the watch):
         // drop the course banner when the active itinerary goes away.
         viewModelScope.launch {
@@ -192,11 +205,18 @@ class ExploreViewModel(
 
     fun selectPlace(placeId: String?) = local.update { it.copy(selectedPlaceId = placeId) }
 
+    /** Picks how the next course is calculated and remembers it for later. */
+    fun selectTravelMode(mode: TravelMode) {
+        if (local.value.course is CourseState.Starting) return
+        local.update { it.copy(travelMode = mode) }
+        viewModelScope.launch { settingsRepository.setTravelMode(mode) }
+    }
+
     fun toggleRecommended() = local.update { it.copy(showRecommended = !it.showRecommended) }
 
     /**
-     * "Fijar rumbo": street route from the traveler to [place], active navigation
-     * session and first cue + vibration sent to Vibra.
+     * "Fijar rumbo": street route from the traveler to [place] for the selected travel
+     * mode, active navigation session and first cue + vibration sent to Vibra.
      */
     fun setCourse(place: Place) {
         if (local.value.course is CourseState.Starting) return
@@ -204,7 +224,7 @@ class ExploreViewModel(
             it.copy(course = CourseState.Starting(place.id), pinnedPlaceIds = it.pinnedPlaceIds + place.id)
         }
         viewModelScope.launch {
-            val result = startNavigationToPlace(place, state.value.location.point)
+            val result = startNavigationToPlace(place, state.value.location.point, local.value.travelMode)
             local.update {
                 it.copy(
                     course = CourseState.Started(place.id, result.followsStreets, result.watchSynced),
