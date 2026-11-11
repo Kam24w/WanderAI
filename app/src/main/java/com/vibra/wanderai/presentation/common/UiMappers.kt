@@ -8,6 +8,7 @@ import androidx.compose.material.icons.outlined.TurnRight
 import androidx.compose.material.icons.outlined.UTurnLeft
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.Church
+import androidx.compose.material.icons.outlined.DirectionsCar
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Landscape
 import androidx.compose.material.icons.outlined.Museum
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Straight
 import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.TwoWheeler
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -26,9 +28,27 @@ import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.AchievementType
 import com.vibra.wanderai.domain.model.HapticCommand
 import com.vibra.wanderai.domain.model.PlaceCategory
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.model.TurnDirection
 import com.vibra.wanderai.domain.model.VibraError
 import com.vibra.wanderai.ui.theme.WanderTheme
+
+// ── Travel modes ──────────────────────────────────────────────────────────────
+
+val TravelMode.icon: ImageVector
+    get() = when (this) {
+        TravelMode.WALK -> Icons.AutoMirrored.Outlined.DirectionsWalk
+        TravelMode.MOTORCYCLE -> Icons.Outlined.TwoWheeler
+        TravelMode.CAR -> Icons.Outlined.DirectionsCar
+    }
+
+@get:StringRes
+val TravelMode.labelRes: Int
+    get() = when (this) {
+        TravelMode.WALK -> R.string.travel_mode_walk
+        TravelMode.MOTORCYCLE -> R.string.travel_mode_motorcycle
+        TravelMode.CAR -> R.string.travel_mode_car
+    }
 
 // ── Place categories ──────────────────────────────────────────────────────────
 

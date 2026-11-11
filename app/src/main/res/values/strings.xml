@@ -315,6 +315,9 @@
     <string name="chat_place_nearby">Cerca de ti</string>
     <string name="chat_cost_estimated">aprox.</string>
     <!-- Fijar rumbo (Explorar) -->
+    <string name="travel_mode_walk">A pie</string>
+    <string name="travel_mode_motorcycle">Moto</string>
+    <string name="travel_mode_car">Carro</string>
     <string name="explore_set_course">Fijar rumbo</string>
     <string name="explore_course_resend">Reenviar rumbo</string>
     <string name="explore_course_starting">Calculando ruta…</string>
