@@ -8,6 +8,7 @@ import androidx.core.os.ConfigurationCompat
 import com.vibra.wanderai.R
 import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.LocalizedText
+import com.vibra.wanderai.domain.model.TravelMode
 import java.text.NumberFormat
 import java.util.Locale
 import kotlin.math.abs
@@ -58,4 +59,15 @@ fun currentLanguageCode(): String =
 fun LocalizedText.localized(): String = resolve(currentLanguageCode())
 
 @Composable
-fun walkingLabel(minutes: Int): String = stringResource(R.string.common_walk_minutes, minutes)
+fun walkingLabel(minutes: Int): String = travelTimeLabel(minutes, TravelMode.WALK)
+
+/** "12 min a pie", "3 min en moto", "4 min en carro". */
+@Composable
+fun travelTimeLabel(minutes: Int, mode: TravelMode): String = stringResource(
+    when (mode) {
+        TravelMode.WALK -> R.string.common_walk_minutes
+        TravelMode.MOTORCYCLE -> R.string.common_motorcycle_minutes
+        TravelMode.CAR -> R.string.common_car_minutes
+    },
+    minutes,
+)

@@ -89,6 +89,7 @@ import com.vibra.wanderai.presentation.common.formatDuration
 import com.vibra.wanderai.presentation.common.icon
 import com.vibra.wanderai.presentation.common.itineraryTitleRes
 import com.vibra.wanderai.presentation.common.messageRes
+import com.vibra.wanderai.presentation.common.travelTimeLabel
 import com.vibra.wanderai.presentation.common.wanderViewModel
 import com.vibra.wanderai.presentation.components.AppPermissions
 import com.vibra.wanderai.presentation.components.IconBadge
@@ -419,7 +420,7 @@ private fun NavigationSyncCard(state: VibraUiState, onSync: () -> Unit, onGenera
         val synced = sync is WatchSyncStatus.Synced && sync.itineraryId == itinerary.id
         if (sync is WatchSyncStatus.Synced && synced) {
             StatusPill(
-                text = stringResource(R.string.sync_msg_synced, sync.firstStopTravelMinutes, sync.firstStopName),
+                text = stringResource(R.string.sync_msg_synced, travelTimeLabel(sync.firstStopTravelMinutes, sync.travelMode), sync.firstStopName),
                 color = WanderTheme.colors.success,
                 contentColor = MaterialTheme.colorScheme.onSurface,
             )

@@ -9,6 +9,8 @@
     <string name="common_save">Save</string>
     <string name="common_free">Free</string>
     <string name="common_walk_minutes">%1$d min walk</string>
+    <string name="common_motorcycle_minutes">%1$d min by motorcycle</string>
+    <string name="common_car_minutes">%1$d min by car</string>
     <string name="option_system">System</string>
     <string name="gps_live">Live GPS</string>
     <string name="gps_reference">Reference: Pasto</string>
@@ -98,7 +100,7 @@
         <item quantity="one">Ready to sync %1$d stop with your Vibra.</item>
         <item quantity="other">Ready to sync %1$d stops with your Vibra.</item>
     </plurals>
-    <string name="sync_msg_synced">Itinerary synced (%1$d min walk to %2$s)</string>
+    <string name="sync_msg_synced">Itinerary synced (%1$s to %2$s)</string>
     <string name="sync_action_generate">Generate itinerary</string>
     <string name="sync_action_connect">Connect Vibra</string>
     <string name="sync_action_sync">Sync with Vibra</string>

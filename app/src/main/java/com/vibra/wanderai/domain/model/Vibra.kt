@@ -68,6 +68,7 @@ sealed interface WatchSyncStatus {
         val firstStopName: String,
         val firstStopMeters: Int,
         val firstStopTravelMinutes: Int,
+        val travelMode: TravelMode = TravelMode.WALK,
     ) : WatchSyncStatus
     data class Failed(val error: VibraError) : WatchSyncStatus
 }
