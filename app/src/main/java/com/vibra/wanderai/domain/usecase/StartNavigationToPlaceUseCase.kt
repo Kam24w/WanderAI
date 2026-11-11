@@ -5,6 +5,7 @@ import com.vibra.wanderai.domain.model.HapticCommand
 import com.vibra.wanderai.domain.model.Itinerary
 import com.vibra.wanderai.domain.model.ItineraryStop
 import com.vibra.wanderai.domain.model.Place
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.model.TurnDirection
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.RoutesRepository
@@ -37,7 +38,7 @@ class StartNavigationToPlaceUseCase(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     suspend operator fun invoke(place: Place, origin: GeoPoint): NavigationStart {
-        val streets = routesRepository.walkingPath(listOf(origin, place.location)).getOrNull()
+        val streets = routesRepository.streetPath(listOf(origin, place.location), TravelMode.WALK).getOrNull()
         val path = streets ?: listOf(origin, place.location)
         val meters = NavigationMath.length(path).roundToInt()
         val now = clock()

@@ -1,6 +1,7 @@
 package com.vibra.wanderai.data.google
 
 import com.vibra.wanderai.domain.model.GeoPoint
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.repository.RoutesRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
@@ -49,7 +50,7 @@ object PolylineCodec {
     }
 }
 
-/** Request/response of `directions/v2:computeRoutes` for walking paths. */
+/** Request/response of `directions/v2:computeRoutes` for walking, motorcycle and car paths. */
 object GoogleRoutesProtocol {
     const val ENDPOINT = "https://routes.googleapis.com/directions/v2:computeRoutes"
     const val FIELD_MASK = "routes.polyline.encodedPolyline"
@@ -59,7 +60,14 @@ object GoogleRoutesProtocol {
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun requestBody(waypoints: List<GeoPoint>): String {
+    /** Routes API `travelMode` for each [TravelMode]. */
+    fun apiTravelMode(mode: TravelMode): String = when (mode) {
+        TravelMode.WALK -> "WALK"
+        TravelMode.MOTORCYCLE -> "TWO_WHEELER"
+        TravelMode.CAR -> "DRIVE"
+    }
+
+    fun requestBody(waypoints: List<GeoPoint>, mode: TravelMode = TravelMode.WALK): String {
         require(waypoints.size >= 2) { "A route needs an origin and a destination" }
         return buildJsonObject {
             putWaypoint("origin", waypoints.first())
@@ -70,12 +78,12 @@ object GoogleRoutesProtocol {
                     intermediates.forEach { point -> addJsonObject { putLocation(point) } }
                 }
             }
-            put("travelMode", "WALK")
+            put("travelMode", apiTravelMode(mode))
             put("polylineEncoding", "ENCODED_POLYLINE")
         }.toString()
     }
 
-    /** Decoded path of the first route; empty when Google found no walking route. */
+    /** Decoded path of the first route; empty when Google found no route. */
     fun parsePath(body: String): List<GeoPoint> {
         val routes = json.parseToJsonElement(body).jsonObject["routes"]?.jsonArray ?: return emptyList()
         val encoded = routes.firstOrNull()?.jsonObject?.get("polyline")?.jsonObject
@@ -95,22 +103,23 @@ object GoogleRoutesProtocol {
     }
 }
 
-/** Walking paths along real streets from the Google Routes API. */
+/** Paths along real streets from the Google Routes API, for the chosen [TravelMode]. */
 class GoogleRoutesRepository(private val client: GoogleApiClient) : RoutesRepository {
 
     /** "Fijar rumbo" and the map ask for the same path back to back: answer the second from memory. */
-    @Volatile private var last: Pair<List<GeoPoint>, List<GeoPoint>>? = null
+    @Volatile private var last: Pair<Pair<List<GeoPoint>, TravelMode>, List<GeoPoint>>? = null
 
-    override suspend fun walkingPath(waypoints: List<GeoPoint>): Result<List<GeoPoint>> = try {
-        last?.takeIf { it.first == waypoints }?.let { return Result.success(it.second) }
+    override suspend fun streetPath(waypoints: List<GeoPoint>, mode: TravelMode): Result<List<GeoPoint>> = try {
+        val key = waypoints to mode
+        last?.takeIf { it.first == key }?.let { return Result.success(it.second) }
         check(client.isConfigured) { "MAPS_API_KEY is not configured" }
-        val path = GoogleRoutesProtocol.parsePath(
-            client.post(GoogleRoutesProtocol.ENDPOINT, GoogleRoutesProtocol.FIELD_MASK, GoogleRoutesProtocol.requestBody(waypoints)),
-        )
+        // Two-wheeler routing is not offered everywhere: a car route is the closest fallback.
+        val path = request(waypoints, mode).takeIf { it.size >= 2 }
+            ?: if (mode == TravelMode.MOTORCYCLE) request(waypoints, TravelMode.CAR) else emptyList()
         if (path.size < 2) {
-            Result.failure(IllegalStateException("No walking route"))
+            Result.failure(IllegalStateException("No ${mode.name.lowercase()} route"))
         } else {
-            last = waypoints to path
+            last = key to path
             Result.success(path)
         }
     } catch (e: CancellationException) {
@@ -118,4 +127,9 @@ class GoogleRoutesRepository(private val client: GoogleApiClient) : RoutesReposi
     } catch (e: Exception) {
         Result.failure(e)
     }
+
+    private suspend fun request(waypoints: List<GeoPoint>, mode: TravelMode): List<GeoPoint> =
+        GoogleRoutesProtocol.parsePath(
+            client.post(GoogleRoutesProtocol.ENDPOINT, GoogleRoutesProtocol.FIELD_MASK, GoogleRoutesProtocol.requestBody(waypoints, mode)),
+        )
 }

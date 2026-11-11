@@ -3,6 +3,7 @@ package com.vibra.wanderai.data.google
 import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.PlaceCategory
 import com.vibra.wanderai.domain.model.PlaceSource
+import com.vibra.wanderai.domain.model.TravelMode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -46,6 +47,16 @@ class GoogleProtocolsTest {
 
         val direct = Json.parseToJsonElement(GoogleRoutesProtocol.requestBody(stops.take(2))).jsonObject
         assertNull(direct["intermediates"])
+    }
+
+    @Test
+    fun `route request uses the Routes API mode for each travel mode`() {
+        val stops = listOf(GeoPoint(1.0, -77.0), GeoPoint(1.1, -77.1))
+        fun modeOf(mode: TravelMode) =
+            Json.parseToJsonElement(GoogleRoutesProtocol.requestBody(stops, mode)).jsonObject["travelMode"]!!.jsonPrimitive.content
+        assertEquals("WALK", modeOf(TravelMode.WALK))
+        assertEquals("TWO_WHEELER", modeOf(TravelMode.MOTORCYCLE))
+        assertEquals("DRIVE", modeOf(TravelMode.CAR))
     }
 
     @Test

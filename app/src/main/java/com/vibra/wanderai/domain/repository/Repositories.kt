@@ -18,6 +18,7 @@ import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.SignUpResult
 import com.vibra.wanderai.domain.model.ThemeMode
 import com.vibra.wanderai.domain.model.TravelChatContext
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.model.TravelerStats
 import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.model.VibraDevice
@@ -110,10 +111,10 @@ interface NearbyPlacesRepository {
     suspend fun nearby(center: GeoPoint, radiusMeters: Int, languageCode: String): Result<List<Place>>
 }
 
-/** Walking path along real streets (Google Routes API). */
+/** Path along real streets (Google Routes API) on foot, by motorcycle or by car. */
 interface RoutesRepository {
     /** Path that visits [waypoints] in order; the first is the origin, the last the destination. */
-    suspend fun walkingPath(waypoints: List<GeoPoint>): Result<List<GeoPoint>>
+    suspend fun streetPath(waypoints: List<GeoPoint>, mode: TravelMode): Result<List<GeoPoint>>
 }
 
 /** Conversational travel assistant (Groq) that recommends places from the catalogue. */

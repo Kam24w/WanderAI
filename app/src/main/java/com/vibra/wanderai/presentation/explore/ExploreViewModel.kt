@@ -5,6 +5,7 @@ import com.vibra.wanderai.domain.model.GeoPoint
 import com.vibra.wanderai.domain.model.Itinerary
 import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.PlaceSource
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.model.TravelerLocation
 import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.model.WatchSyncStatus
@@ -144,7 +145,7 @@ class ExploreViewModel(
                 }
                 val waypoints = listOf(location.value.point) + request.stops
                 emit(RoutePath(waypoints, followsStreets = false))
-                routesRepository.walkingPath(waypoints).onSuccess { emit(RoutePath(it, followsStreets = true)) }
+                routesRepository.streetPath(waypoints, TravelMode.WALK).onSuccess { emit(RoutePath(it, followsStreets = true)) }
             }
             .onStart { emit(RoutePath.NONE) }
 

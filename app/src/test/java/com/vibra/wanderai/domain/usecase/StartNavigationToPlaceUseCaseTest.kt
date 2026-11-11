@@ -12,6 +12,7 @@ import com.vibra.wanderai.domain.model.NavigationAction
 import com.vibra.wanderai.domain.model.NavigationEvent
 import com.vibra.wanderai.domain.model.Place
 import com.vibra.wanderai.domain.model.PlaceCategory
+import com.vibra.wanderai.domain.model.TravelMode
 import com.vibra.wanderai.domain.model.TurnDirection
 import com.vibra.wanderai.domain.model.VibraConnectionState
 import com.vibra.wanderai.domain.model.VibraDevice
@@ -47,8 +48,10 @@ class StartNavigationToPlaceUseCaseTest {
 
     private class FakeRoutes(private val path: List<GeoPoint>?) : RoutesRepository {
         val requests = mutableListOf<List<GeoPoint>>()
-        override suspend fun walkingPath(waypoints: List<GeoPoint>): Result<List<GeoPoint>> {
+        val modes = mutableListOf<TravelMode>()
+        override suspend fun streetPath(waypoints: List<GeoPoint>, mode: TravelMode): Result<List<GeoPoint>> {
             requests += waypoints
+            modes += mode
             return path?.let { Result.success(it) } ?: Result.failure(IllegalStateException("offline"))
         }
     }
