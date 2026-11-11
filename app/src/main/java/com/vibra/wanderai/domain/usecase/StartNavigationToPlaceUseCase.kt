@@ -10,7 +10,6 @@ import com.vibra.wanderai.domain.model.TurnDirection
 import com.vibra.wanderai.domain.repository.ItineraryRepository
 import com.vibra.wanderai.domain.repository.RoutesRepository
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /** Outcome of "Fijar rumbo". */
@@ -25,7 +24,8 @@ data class NavigationStart(
 /**
  * "Fijar rumbo": navigation from the traveler's position to a single [Place]
  * (typically one recommended in the AI chat).
- *  1. asks the Routes API for the walking path along real streets;
+ *  1. asks the Routes API for the path along real streets for the [TravelMode]
+ *     (on foot, by motorcycle or by car);
  *  2. makes a one-stop itinerary the active route, so the map draws it and
  *     [NavigationGuidanceController] mirrors `/wanderai/active_route` to the watch;
  *  3. sends the first manoeuvre of that path (turn or straight + distance) with its
@@ -37,8 +37,8 @@ class StartNavigationToPlaceUseCase(
     private val syncItineraryToWatch: SyncItineraryToWatchUseCase,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
-    suspend operator fun invoke(place: Place, origin: GeoPoint): NavigationStart {
-        val streets = routesRepository.streetPath(listOf(origin, place.location), TravelMode.WALK).getOrNull()
+    suspend operator fun invoke(place: Place, origin: GeoPoint, mode: TravelMode = TravelMode.WALK): NavigationStart {
+        val streets = routesRepository.streetPath(listOf(origin, place.location), mode).getOrNull()
         val path = streets ?: listOf(origin, place.location)
         val meters = NavigationMath.length(path).roundToInt()
         val now = clock()
@@ -47,20 +47,16 @@ class StartNavigationToPlaceUseCase(
             stops = listOf(
                 ItineraryStop(
                     place = place,
-                    travelMinutes = ceil(meters / WALKING_METERS_PER_MINUTE).toInt().coerceAtLeast(1),
+                    travelMinutes = mode.minutesFor(meters),
                     distanceMeters = meters,
                 ),
             ),
             createdAtMillis = now,
+            travelMode = mode,
         )
         itineraryRepository.setActive(itinerary)
         val synced = syncItineraryToWatch(itinerary, origin, firstCue = NavigationMath.firstManeuver(path))
         return NavigationStart(itinerary, followsStreets = streets != null, watchSynced = synced.isSuccess)
-    }
-
-    private companion object {
-        /** ~4.8 km/h, the same pace used to estimate itinerary legs. */
-        const val WALKING_METERS_PER_MINUTE = 80.0
     }
 }
 

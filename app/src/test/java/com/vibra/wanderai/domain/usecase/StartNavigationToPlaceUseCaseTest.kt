@@ -116,7 +116,7 @@ class StartNavigationToPlaceUseCaseTest {
     }
 
     private class Setup(val useCase: StartNavigationToPlaceUseCase, val wear: FakeWear, val itineraries: FakeItineraries,
-                        val ble: DisconnectedBle, val guidance: NavigationGuidanceController)
+                        val ble: DisconnectedBle, val guidance: NavigationGuidanceController, val routes: FakeRoutes)
 
     private fun setup(path: List<GeoPoint>?, watchConnected: Boolean = true): Setup {
         val wear = FakeWear(watchConnected)
@@ -124,7 +124,8 @@ class StartNavigationToPlaceUseCaseTest {
         val ble = DisconnectedBle()
         val guidance = NavigationGuidanceController(wear, itineraries.activeItinerary, ble.hapticIntensity, text, announcer, clock = { 5_000L })
         val sync = SyncItineraryToWatchUseCase(ble, guidance)
-        return Setup(StartNavigationToPlaceUseCase(FakeRoutes(path), itineraries, sync, clock = { 5_000L }), wear, itineraries, ble, guidance)
+        val routes = FakeRoutes(path)
+        return Setup(StartNavigationToPlaceUseCase(routes, itineraries, sync, clock = { 5_000L }), wear, itineraries, ble, guidance, routes)
     }
 
     @Test
@@ -154,6 +155,23 @@ class StartNavigationToPlaceUseCaseTest {
         assertTrue(s.wear.routes.last().routeActive)
         assertTrue(s.ble.syncStatus.value is WatchSyncStatus.Synced)
         assertEquals(GuidanceState(lastEvent = cue), s.guidance.state.value)
+    }
+
+    @Test
+    fun `walks by default and keeps the chosen travel mode on the route`() = runTest {
+        val path = listOf(origin, corner, park.location)
+        val walk = setup(path).also { it.useCase(park, origin) }
+        assertEquals(listOf(TravelMode.WALK), walk.routes.modes)
+        assertEquals(TravelMode.WALK, walk.itineraries.activeItinerary.value!!.travelMode)
+        assertEquals(3, walk.itineraries.activeItinerary.value!!.stops.single().travelMinutes) // ~200 m on foot
+
+        val car = setup(path).also { it.useCase(park, origin, TravelMode.CAR) }
+        assertEquals(listOf(TravelMode.CAR), car.routes.modes)
+        val active = car.itineraries.activeItinerary.value!!
+        assertEquals(TravelMode.CAR, active.travelMode)
+        assertEquals(1, active.stops.single().travelMinutes)
+        // The watch still gets the same kind of cue: a turn with its vibration.
+        assertEquals(NavigationAction.TURN_RIGHT, car.wear.sent.single().action)
     }
 
     @Test

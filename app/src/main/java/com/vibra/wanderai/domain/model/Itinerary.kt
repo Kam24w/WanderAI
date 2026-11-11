@@ -33,6 +33,8 @@ data class Itinerary(
     val id: String,
     val stops: List<ItineraryStop>,
     val createdAtMillis: Long,
+    /** How the traveler moves along this route (generated itineraries are walking tours). */
+    val travelMode: TravelMode = TravelMode.WALK,
 ) {
     val totalMinutes: Int get() = stops.sumOf { it.travelMinutes + it.place.visitMinutes }
     val estimatedCostCop: Int get() = stops.sumOf { it.place.averageCostCop }

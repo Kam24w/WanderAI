@@ -53,7 +53,7 @@ data class ExploreUiState(
     val pinnedPlaceIds: Set<String> = emptySet(),
     /** A recommendation tapped in the AI chat or in a generated itinerary, not yet shown. */
     val focusRequest: MapFocusRequest? = null,
-    /** Walking path of the active route (real streets when [RoutePath.followsStreets]). */
+    /** Path of the active route in its travel mode (real streets when [RoutePath.followsStreets]). */
     val routePath: RoutePath = RoutePath.NONE,
     val course: CourseState = CourseState.Idle,
     /** The camera should frame the new course once its path is drawn. */
@@ -115,7 +115,12 @@ data class RoutePath(val points: List<GeoPoint>, val followsStreets: Boolean) {
 }
 
 /** What makes a new Routes API request necessary: another itinerary or a move of ~110 m. */
-private data class RouteRequest(val itineraryId: String, val stops: List<GeoPoint>, val originCell: Pair<Int, Int>)
+private data class RouteRequest(
+    val itineraryId: String,
+    val stops: List<GeoPoint>,
+    val originCell: Pair<Int, Int>,
+    val mode: TravelMode,
+)
 
 class ExploreViewModel(
     placesRepository: PlacesRepository,
@@ -135,7 +140,7 @@ class ExploreViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val routePath: Flow<RoutePath> =
         combine(itineraryRepository.activeItinerary, location) { itinerary, loc ->
-            itinerary?.let { RouteRequest(it.id, it.stops.map { stop -> stop.place.location }, loc.point.cell()) }
+            itinerary?.let { RouteRequest(it.id, it.stops.map { stop -> stop.place.location }, loc.point.cell(), it.travelMode) }
         }
             .distinctUntilChanged()
             .transformLatest { request ->
@@ -145,7 +150,7 @@ class ExploreViewModel(
                 }
                 val waypoints = listOf(location.value.point) + request.stops
                 emit(RoutePath(waypoints, followsStreets = false))
-                routesRepository.streetPath(waypoints, TravelMode.WALK).onSuccess { emit(RoutePath(it, followsStreets = true)) }
+                routesRepository.streetPath(waypoints, request.mode).onSuccess { emit(RoutePath(it, followsStreets = true)) }
             }
             .onStart { emit(RoutePath.NONE) }
 
