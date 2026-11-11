@@ -14,7 +14,7 @@ class IdentifyLandmarkUseCaseTest {
 
     @Test
     fun `standing at San Felipe detects it with high confidence`() = runTest {
-        val match = identify(GeoPoint(1.2147, -77.2822))
+        val match = identify(GeoPoint(1.21392, -77.28513))
         assertEquals("san-felipe", match?.place?.id)
         assertTrue(match!!.confidencePercent >= 95)
     }
@@ -26,8 +26,8 @@ class IdentifyLandmarkUseCaseTest {
 
     @Test
     fun `confidence decreases with distance`() = runTest {
-        val near = identify(GeoPoint(1.2147, -77.2822))!!
-        val far = identify(GeoPoint(1.2156, -77.2822))!! // ~100 m north of San Felipe
+        val near = identify(GeoPoint(1.21392, -77.28513))!!
+        val far = identify(GeoPoint(1.21482, -77.28513))!! // ~100 m north of San Felipe
         assertEquals(near.place.id, far.place.id)
         assertTrue(far.confidencePercent < near.confidencePercent)
     }

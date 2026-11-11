@@ -319,10 +319,10 @@ private fun DrawScope.drawBaseMap(viewport: MapViewport, colors: WanderExtendedC
 }
 
 private val PARK_CENTERS = listOf(
-    GeoPoint(1.2137, -77.2811), // Plaza de Nariño
-    GeoPoint(1.2205, -77.2752), // Parque Infantil
-    GeoPoint(1.2062, -77.2731), // Parque Bolívar
-    GeoPoint(1.2208, -77.2884), // Loma del Centenario
+    GeoPoint(1.21471, -77.27827), // Plaza de Nariño
+    GeoPoint(1.21951, -77.28154), // Parque Infantil
+    GeoPoint(1.20554, -77.27023), // Parque Bolívar
+    GeoPoint(1.21139, -77.26822), // Loma del Centenario
 )
 
 private fun DrawScope.drawRoute(viewport: MapViewport, route: List<GeoPoint>, colors: WanderExtendedColors) {

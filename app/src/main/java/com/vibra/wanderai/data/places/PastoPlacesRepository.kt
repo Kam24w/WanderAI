@@ -24,7 +24,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "san-felipe",
                 name = "Templo de San Felipe Neri",
                 category = PlaceCategory.HERITAGE,
-                location = GeoPoint(1.2147, -77.2822),
+                location = GeoPoint(1.21392, -77.28513),
                 rating = 4.8, averageCostCop = 0, visitMinutes = 25,
                 summary = LocalizedText(
                     es = "Templo colonial con retablos tallados en madera y fachada de piedra.",
@@ -39,7 +39,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "catedral",
                 name = "Catedral de Pasto",
                 category = PlaceCategory.HERITAGE,
-                location = GeoPoint(1.2155, -77.2790),
+                location = GeoPoint(1.21563, -77.27985),
                 rating = 4.7, averageCostCop = 0, visitMinutes = 25,
                 summary = LocalizedText(
                     es = "Catedral de San Ignacio, sede de la diócesis de Pasto.",
@@ -54,7 +54,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "san-juan",
                 name = "Iglesia de San Juan Bautista",
                 category = PlaceCategory.HERITAGE,
-                location = GeoPoint(1.2141, -77.2801),
+                location = GeoPoint(1.21505, -77.27881),
                 rating = 4.8, averageCostCop = 0, visitMinutes = 20,
                 summary = LocalizedText(
                     es = "La iglesia más antigua de la ciudad, junto a la Plaza de Nariño.",
@@ -69,7 +69,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "cristo-rey",
                 name = "Iglesia de Cristo Rey",
                 category = PlaceCategory.HERITAGE,
-                location = GeoPoint(1.2126, -77.2826),
+                location = GeoPoint(1.21488, -77.27678),
                 rating = 4.7, averageCostCop = 0, visitMinutes = 20,
                 summary = LocalizedText(
                     es = "Templo neogótico con vitrales y torres esbeltas.",
@@ -85,7 +85,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "museo-oro",
                 name = "Museo del Oro Nariño",
                 category = PlaceCategory.MUSEUM,
-                location = GeoPoint(1.2131, -77.2836),
+                location = GeoPoint(1.21152, -77.2766),
                 rating = 4.8, averageCostCop = 0, visitMinutes = 45,
                 summary = LocalizedText(
                     es = "Orfebrería y cerámica de las culturas prehispánicas de Nariño.",
@@ -100,7 +100,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "taminango",
                 name = "Museo Taminango",
                 category = PlaceCategory.MUSEUM,
-                location = GeoPoint(1.2181, -77.2858),
+                location = GeoPoint(1.21529, -77.28422),
                 rating = 4.6, averageCostCop = 8_000, visitMinutes = 40,
                 summary = LocalizedText(
                     es = "Casona de 1623 con artes y tradiciones populares de Nariño.",
@@ -115,7 +115,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "museo-carnaval",
                 name = "Casa del Carnaval",
                 category = PlaceCategory.MUSEUM,
-                location = GeoPoint(1.2109, -77.2779),
+                location = GeoPoint(1.23034, -77.28693),
                 rating = 4.5, averageCostCop = 5_000, visitMinutes = 35,
                 summary = LocalizedText(
                     es = "Carrozas y máscaras del Carnaval de Negros y Blancos.",
@@ -131,7 +131,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "plaza-narino",
                 name = "Plaza de Nariño",
                 category = PlaceCategory.PARK,
-                location = GeoPoint(1.2137, -77.2811),
+                location = GeoPoint(1.21471, -77.27827),
                 rating = 4.6, averageCostCop = 0, visitMinutes = 20,
                 summary = LocalizedText(
                     es = "Corazón histórico de Pasto, rodeado de edificios republicanos.",
@@ -142,7 +142,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "parque-infantil",
                 name = "Parque Infantil",
                 category = PlaceCategory.PARK,
-                location = GeoPoint(1.2205, -77.2752),
+                location = GeoPoint(1.21951, -77.28154),
                 rating = 4.4, averageCostCop = 0, visitMinutes = 30,
                 summary = LocalizedText(
                     es = "Zona verde amplia con senderos, ideal para caminar.",
@@ -153,7 +153,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "parque-bolivar",
                 name = "Parque Bolívar",
                 category = PlaceCategory.PARK,
-                location = GeoPoint(1.2062, -77.2731),
+                location = GeoPoint(1.20554, -77.27023),
                 rating = 4.3, averageCostCop = 0, visitMinutes = 25,
                 summary = LocalizedText(
                     es = "Parque tradicional del sur con zonas de descanso.",
@@ -165,7 +165,7 @@ class PastoPlacesRepository : PlacesRepository {
                 id = "mirador-centenario",
                 name = "Mirador Loma del Centenario",
                 category = PlaceCategory.VIEWPOINT,
-                location = GeoPoint(1.2208, -77.2884),
+                location = GeoPoint(1.21139, -77.26822),
                 rating = 4.7, averageCostCop = 0, visitMinutes = 30,
                 summary = LocalizedText(
                     es = "Vista panorámica del valle de Atriz y el volcán Galeras.",
