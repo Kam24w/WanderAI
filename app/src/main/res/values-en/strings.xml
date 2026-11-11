@@ -153,11 +153,12 @@
     <string name="vibra_test_arrived">Arrived</string>
     <string name="vibra_last_command">Last sent: %1$s</string>
     <string name="vibra_how_title">How does it work?</string>
-    <string name="vibra_description">WanderAI sends every route instruction to the watch over Bluetooth Low Energy. Vibra turns it into a vibration pattern so you can walk without looking at your phone.</string>
-    <string name="vibra_pattern_left">2 short pulses — turn left</string>
-    <string name="vibra_pattern_right">3 short pulses — turn right</string>
-    <string name="vibra_pattern_straight">1 long pulse — keep straight</string>
-    <string name="vibra_pattern_arrived">Burst + long pulse — you\'ve arrived</string>
+    <string name="vibra_description">WanderAI sends every route instruction to the watch over Bluetooth (Wear OS). Vibra turns it into a different vibration rhythm for each manoeuvre, so you can keep going without looking at your phone.</string>
+    <string name="vibra_pattern_left">3 even, steady pulses — turn left</string>
+    <string name="vibra_pattern_right">Double tap, pause, double tap — turn right</string>
+    <string name="vibra_pattern_straight">3 pulses that speed up and get stronger — keep straight</string>
+    <string name="vibra_pattern_u_turn">2 bursts of quick taps — turn around</string>
+    <string name="vibra_pattern_arrived">4 long pulses — you\'ve arrived</string>
     <string name="vibra_error_unavailable">Bluetooth LE isn\'t available on this device.</string>
     <string name="vibra_error_disabled">Turn on Bluetooth to search for your Vibra.</string>
     <string name="vibra_error_permission">Grant the nearby devices permission to connect your Vibra.</string>

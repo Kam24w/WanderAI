@@ -538,6 +538,7 @@ private fun HowItWorksCard() {
         PatternLegend(Icons.Outlined.TurnLeft, stringResource(R.string.vibra_pattern_left))
         PatternLegend(Icons.Outlined.TurnRight, stringResource(R.string.vibra_pattern_right))
         PatternLegend(Icons.Outlined.Straight, stringResource(R.string.vibra_pattern_straight))
+        PatternLegend(Icons.Outlined.UTurnLeft, stringResource(R.string.vibra_pattern_u_turn))
         PatternLegend(Icons.Outlined.Flag, stringResource(R.string.vibra_pattern_arrived))
     }
 }
